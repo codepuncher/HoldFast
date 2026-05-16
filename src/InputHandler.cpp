@@ -91,8 +91,8 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 					logger::error("UIMessageQueue unavailable — hold threshold reached but map not opened");
 				} else {
 					uiQueue->AddMessage(RE::MapMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
+					_mapTriggered = true;
 				}
-				_mapTriggered = true;
 			}
 		} else if (btn->IsUp() && _pressTime) {
 			shouldBlock = true;
@@ -116,7 +116,13 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 				}
 
 				if (!shortPressMenuName.empty()) {
-					uiQueue->AddMessage(shortPressMenuName, RE::UI_MESSAGE_TYPE::kShow, nullptr);
+					if (shortPressMenuName == RE::JournalMenu::MENU_NAME) {
+						using func_t = void(*)(bool);
+						static REL::Relocation<func_t> openJournal{ RELOCATION_ID(52428, 53327) };
+						openJournal(true);
+					} else {
+						uiQueue->AddMessage(shortPressMenuName, RE::UI_MESSAGE_TYPE::kShow, nullptr);
+					}
 				}
 			}
 		}
