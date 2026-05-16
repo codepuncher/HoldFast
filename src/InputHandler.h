@@ -1,6 +1,8 @@
 #pragma once
 
-class InputHandler : public RE::BSTEventSink<RE::InputEvent*>
+class InputHandler :
+	public RE::BSTEventSink<RE::InputEvent*>,
+	public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
 public:
 	static InputHandler* GetSingleton();
@@ -8,6 +10,10 @@ public:
 	RE::BSEventNotifyControl ProcessEvent(
 		RE::InputEvent* const*                  a_events,
 		RE::BSTEventSource<RE::InputEvent*>* a_source) override;
+
+	RE::BSEventNotifyControl ProcessEvent(
+		const RE::MenuOpenCloseEvent*            a_event,
+		RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_source) override;
 
 	float       holdDuration{ 1.0f };
 	std::string shortPressMenuName;

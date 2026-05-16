@@ -38,6 +38,16 @@ void InputHandler::UpdateShortPressMenu()
 }
 
 RE::BSEventNotifyControl InputHandler::ProcessEvent(
+	const RE::MenuOpenCloseEvent*               a_event,
+	RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
+{
+	if (a_event && !a_event->opening && a_event->menuName == RE::JournalMenu::MENU_NAME) {
+		UpdateShortPressMenu();
+	}
+	return RE::BSEventNotifyControl::kContinue;
+}
+
+RE::BSEventNotifyControl InputHandler::ProcessEvent(
 	RE::InputEvent* const*               a_events,
 	RE::BSTEventSource<RE::InputEvent*>*)
 {
@@ -87,13 +97,13 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		} else if (btn->IsUp() && _pressTime) {
 			shouldBlock = true;
 
-			const auto held = std::chrono::duration<float>(std::chrono::steady_clock::now() - *_pressTime).count();
+			const auto held = std::chrono::duration<float>(
+				std::chrono::steady_clock::now() - *_pressTime).count();
 			_pressTime.reset();
 
 			if (_mapTriggered) {
 				_mapTriggered = false;
 			} else {
-				// Discard stale presses (e.g. controller disconnect while held then reconnect)
 				if (held > 10.0f) {
 					logger::warn("Start press duration {:.1f}s exceeds sanity limit — discarded", held);
 					continue;
