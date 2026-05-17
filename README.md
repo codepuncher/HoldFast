@@ -192,7 +192,6 @@ Triggered via **workflow_dispatch** with `upload_to_nexus: true` and the `versio
 
 - Inspired by the hold-Start-to-open-map mechanic in **Red Dead Redemption 2**
 - [CommonLibSSE-NG](https://github.com/alandtse/CommonLibVR) by alandtse and contributors
-- [NADS-SSE](https://github.com/EliasRipley/NADS-SSE) by EliasRipley — `PrependEventSink` + chrono timing pattern
 
 ---
 
