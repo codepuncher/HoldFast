@@ -11,12 +11,13 @@ on:
         type: boolean
         default: false
       version:
-        description: "Version to upload to Nexus Mods, without 'v' prefix (e.g. 1.0.0) — required when upload_to_nexus is true"
+        description: "Version without 'v' prefix (e.g. 1.0.0). Required when upload_to_nexus is true; unused otherwise (workflow does nothing without upload_to_nexus)"
         type: string
         required: false
 
 jobs:
   release:
+    if: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) || (github.event_name == 'workflow_dispatch' && inputs.upload_to_nexus) }}
     runs-on: windows-latest
 
     permissions:
@@ -53,33 +54,39 @@ jobs:
         env:
           VCPKG_BINARY_SOURCES: "clear;files,C:\\vcpkg-cache,readwrite"
 
+      - name: Determine version
+        id: version
+        shell: pwsh
+        env:
+          GH_EVENT_NAME: ${{ github.event_name }}
+          GH_REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if ($env:GH_EVENT_NAME -eq "push") {
+            $v = $env:GH_REF_NAME -replace '^v', ''
+          } else {
+            $v = $env:INPUT_VERSION
+            if (-not $v) {
+              throw "The 'version' input is required when upload_to_nexus is true (e.g. 1.0.0)"
+            }
+          }
+          echo "value=$v" >> $env:GITHUB_OUTPUT
+
+      - name: Package
+        id: package
+        shell: bash
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: bash scripts/package.sh --build-dir build/msvc/Release "$VERSION"
+
       - name: Create GitHub Release
         if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') }}
-        id: gh_release
         uses: softprops/action-gh-release@v3
         with:
           files: |
-            build/msvc/Release/*.dll
+            ${{ steps.package.outputs.zip }}
             build/msvc/Release/*.pdb
-            QuickMap.ini
           generate_release_notes: true
-
-      - name: Package for Nexus Mods
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_to_nexus }}
-        shell: pwsh
-        run: |
-          $version = "${{ inputs.version }}"
-          if (-not $version) { throw "The 'version' input is required when upload_to_nexus is true (e.g. 1.0.0)" }
-          $dlls = @(Get-Item build/msvc/Release/*.dll)
-          if ($dlls.Count -ne 1) { throw "Expected exactly 1 DLL, found $($dlls.Count)" }
-          $name = "$($dlls[0].BaseName)-$version.zip"
-          $pluginsDir = "SKSE\Plugins"
-          New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
-          Copy-Item $dlls[0] -Destination $pluginsDir
-          Copy-Item QuickMap.ini -Destination $pluginsDir
-          Compress-Archive -Path "SKSE" -DestinationPath $name
-          echo "NEXUS_ZIP=$name" >> $env:GITHUB_ENV
-          echo "NEXUS_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Upload to Nexus Mods
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.upload_to_nexus }}
@@ -87,6 +94,7 @@ jobs:
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
           file_group_id: ${{ vars.NEXUSMODS_FILE_GROUP_ID }}
-          filename: ${{ env.NEXUS_ZIP }}
-          version: ${{ env.NEXUS_VERSION }}
+          filename: ${{ steps.package.outputs.zip }}
+          version: ${{ steps.version.outputs.value }}
           archive_existing_file: true
+
