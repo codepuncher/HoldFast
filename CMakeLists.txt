@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(
-    ExampleMod
+    QuickMap
     VERSION 0.0.1
     LANGUAGES CXX)
 
@@ -56,10 +56,12 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/lib/commonlibsse-ng/cmake/CommonLibSSE.cmak
 add_commonlibsse_plugin(
     ${PROJECT_NAME}
     NAME
-    "ExampleMod"
+    "QuickMap"
     AUTHOR
-    "Author"
+    "codepuncher"
     SOURCES
+    src/InputHandler.h
+    src/InputHandler.cpp
     src/Plugin.cpp
     USE_ADDRESS_LIBRARY)
 
@@ -69,7 +71,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/
 
 set_target_properties(
     ${PROJECT_NAME}
-    PROPERTIES OUTPUT_NAME ExampleMod
+    PROPERTIES OUTPUT_NAME QuickMap
                PREFIX ""
                SUFFIX ".dll")
 
@@ -100,6 +102,8 @@ install(
     FILES "$<TARGET_PDB_FILE:${PROJECT_NAME}>"
     DESTINATION "${DEPLOY_DIR}/SKSE/Plugins"
     OPTIONAL)
+
+install(FILES "QuickMap.ini" DESTINATION "${DEPLOY_DIR}/SKSE/Plugins")
 
 # `cmake --build --preset deploy`  (or  cmake --workflow --preset deploy)
 add_custom_target(

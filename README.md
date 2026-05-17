@@ -1,7 +1,8 @@
-# ExampleMod
+# QuickMap
 
-A starter template for Skyrim Special Edition / Anniversary Edition SKSE plugins using
-[CommonLibSSE-NG](https://github.com/alandtse/CommonLibVR/tree/ng), [CMake](https://cmake.org), and [vcpkg](https://vcpkg.io).
+Hold the gamepad **Start button** for a configurable duration to open the **world map**. A short press opens whatever Start is natively bound to (Journal Menu or Tween Menu) as normal.
+
+Inspired by Red Dead Redemption 2's hold-start-to-open-map mechanic.
 
 Supports building on **Linux** (cross-compilation via `clang-cl` + [xwin](https://github.com/Jake-Shadle/xwin)) and **Windows** (MSVC).
 
@@ -37,42 +38,16 @@ Supports building on **Linux** (cross-compilation via `clang-cl` + [xwin](https:
 
 ## Getting Started
 
-### 1. Use this template
-
-Click **"Use this template"** on GitHub, or clone and re-initialise:
+### 1. Clone
 
 ```bash
-git clone https://github.com/your-org/your-mod.git
-cd your-mod
+git clone --recurse-submodules https://github.com/codepuncher/QuickMap.git
+cd QuickMap
 ```
 
-### 2. Run the init script
+### 2. Configure deploy path
 
-**Linux** — run interactively or pass arguments directly:
-
-```bash
-./scripts/init.sh
-# or:
-./scripts/init.sh "AuthorName" "ModName"
-```
-
-**Windows (PowerShell)**:
-
-```powershell
-.\scripts\init.ps1
-# or:
-.\scripts\init.ps1 "AuthorName" "ModName"
-```
-
-This will:
-- Replace mod name and author placeholders across all files
-- Initialise git submodules (CommonLibSSE-NG + vcpkg)
-- Bootstrap vcpkg
-- Copy `.env.example` → `.env` with a reminder to fill in your paths
-
-### 3. Configure deploy path
-
-Edit the `.env` file created by the init script and set `SKYRIM_MODS_FOLDER` to your mod manager's staging folder:
+Edit `.env` and set `SKYRIM_MODS_FOLDER` to your mod manager's staging folder:
 
 ```bash
 # Vortex (Linux, Steam):
@@ -82,7 +57,7 @@ SKYRIM_MODS_FOLDER=$HOME/.local/share/Steam/steamapps/common/Vortex Mods/skyrims
 # SKYRIM_MODS_FOLDER=$HOME/MO2/mods
 ```
 
-### 4. Build
+### 3. Build
 
 ```bash
 ./scripts/build.sh
@@ -91,7 +66,7 @@ cmake --preset release-linux
 cmake --build --preset release-linux
 ```
 
-The DLL lands in `build/release-linux/ExampleMod.dll`.
+The DLL lands in `build/release-linux/QuickMap.dll`.
 
 > **Note:** On first configure, `cmake/toolchains/clang-cl-cross.cmake` creates
 > TitleCase symlinks inside your xwin installation, e.g.:
@@ -109,9 +84,9 @@ The DLL lands in `build/release-linux/ExampleMod.dll`.
 source .env && cmake --workflow --preset deploy
 ```
 
-This configures, builds, and copies `ExampleMod.dll` + `ExampleMod.pdb` directly into:
+This configures, builds, and copies `QuickMap.dll` + `QuickMap.pdb` directly into:
 ```
-$SKYRIM_MODS_FOLDER/ExampleMod/SKSE/Plugins/
+$SKYRIM_MODS_FOLDER/QuickMap/SKSE/Plugins/
 ```
 
 Vortex will detect the new mod folder automatically. Enable it in Vortex, then launch Skyrim.
@@ -128,17 +103,24 @@ cmake --preset release-windows
 cmake --build --preset release-windows
 ```
 
-The DLL lands in `build/msvc/Release/ExampleMod.dll`.
+The DLL lands in `build/msvc/Release/QuickMap.dll`.
 
 ---
 
-## What the Starter Plugin Does
+## What QuickMap Does
 
 When loaded by Skyrim the plugin:
 
-1. **Writes a log** to `Data/SKSE/Plugins/ExampleMod.log` via spdlog.
-2. **Hooks `kDataLoaded`** (fires once all game data is loaded).
-3. **Prints to the in-game console** (`~` key): `[ExampleMod] Loaded successfully!`
+1. **Writes a log** to `%USERPROFILE%\Documents\My Games\Skyrim Special Edition\SKSE\QuickMap.log` via spdlog.
+2. **Registers an input sink** at `kInputLoaded` to intercept gamepad Start button events.
+3. **Refreshes the short-press binding** at `kInputLoaded`, `kPostLoadGame`, and `kNewGame` by querying `ControlMap`.
+
+Hold duration is configurable via `Data/SKSE/Plugins/QuickMap.ini`:
+
+```ini
+[General]
+fHoldDuration=1.0
+```
 
 ---
 

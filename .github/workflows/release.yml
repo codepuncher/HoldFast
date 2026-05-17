@@ -61,6 +61,7 @@ jobs:
           files: |
             build/msvc/Release/*.dll
             build/msvc/Release/*.pdb
+            QuickMap.ini
           generate_release_notes: true
 
       - name: Package for Nexus Mods
@@ -72,7 +73,11 @@ jobs:
           $dlls = @(Get-Item build/msvc/Release/*.dll)
           if ($dlls.Count -ne 1) { throw "Expected exactly 1 DLL, found $($dlls.Count)" }
           $name = "$($dlls[0].BaseName)-$version.zip"
-          Compress-Archive -Path $dlls[0] -DestinationPath $name
+          $pluginsDir = "SKSE\Plugins"
+          New-Item -ItemType Directory -Force -Path $pluginsDir | Out-Null
+          Copy-Item $dlls[0] -Destination $pluginsDir
+          Copy-Item QuickMap.ini -Destination $pluginsDir
+          Compress-Archive -Path "SKSE" -DestinationPath $name
           echo "NEXUS_ZIP=$name" >> $env:GITHUB_ENV
           echo "NEXUS_VERSION=$version" >> $env:GITHUB_ENV
 
