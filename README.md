@@ -188,10 +188,12 @@ Triggered via **workflow_dispatch** with `upload_to_nexus: true` and the `versio
 
 ---
 
-## Credits & Inspirations
+## Credits
 
 - Inspired by the hold-Start-to-open-map mechanic in **Red Dead Redemption 2**
-- [CommonLibSSE-NG](https://github.com/alandtse/CommonLibVR) by alandtse and contributors
+- [SKSE](https://skse.silverlock.org/) by the SKSE Team
+- [Address Library for SKSE plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444) by [meh321](https://www.nexusmods.com/profile/meh321)
+- [CommonLibSSE-NG](https://github.com/alandtse/CommonLibVR) by [alandtse](https://github.com/alandtse) and contributors
 
 ---
 
