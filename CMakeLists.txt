@@ -94,7 +94,7 @@ endif()
 
 set(DEPLOY_DIR
     "${_default_deploy}"
-    CACHE PATH "Deploy destination (set SKYRIM_MODS_FOLDER or SKYRIM_FOLDER in .env)" FORCE)
+    CACHE PATH "Deploy destination (set SKYRIM_MODS_FOLDER or SKYRIM_FOLDER in .env)")
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "${DEPLOY_DIR}/SKSE/Plugins")
 
@@ -103,9 +103,7 @@ install(
     DESTINATION "${DEPLOY_DIR}/SKSE/Plugins"
     OPTIONAL)
 
-install(
-    FILES "QuickMap.ini"
-    DESTINATION "${DEPLOY_DIR}/SKSE/Plugins")
+install(FILES "QuickMap.ini" DESTINATION "${DEPLOY_DIR}/SKSE/Plugins")
 
 # `cmake --build --preset deploy`  (or  cmake --workflow --preset deploy)
 add_custom_target(
