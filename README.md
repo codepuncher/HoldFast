@@ -1,10 +1,12 @@
 # QuickMap
 
-Hold a configurable gamepad button (**Start** or **Back**, default: **Start**) for a configurable duration to open the **world map**. A short press opens the button's normal menu.
+Hold a configurable gamepad button (**Start** or **Back**, default: **Start**) for a configurable duration to open the **map**. A short press opens the button's normal menu.
 
 > **Gamepad only.** Default behaviour is fully preserved.
 
 Inspired by Red Dead Redemption 2's hold-Start-to-open-map mechanic.
+
+**[NexusMods page](https://www.nexusmods.com/skyrimspecialedition/mods/180226)**
 
 ---
 

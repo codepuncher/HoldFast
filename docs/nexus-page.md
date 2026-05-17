@@ -2,7 +2,7 @@
 
 ## Short Description
 
-Hold a configurable gamepad button (Start or Back, default: Start) to open the world map. A short press opens the button's normal menu.
+Hold a configurable gamepad button (Start or Back, default: Start) to open the map. A short press opens the button's normal menu.
 
 ---
 
@@ -27,7 +27,7 @@ Hold a configurable gamepad button (Start or Back, default: Start) to open the w
 
 [size=4][b]Overview[/b][/size]
 
-Hold a configurable gamepad button (Start or Back, default: [b]Start[/b]) for a configurable duration to open the [b]world map[/b] directly. A short press opens the button's normal menu.
+Hold a configurable gamepad button (Start or Back, default: [b]Start[/b]) for a configurable duration to open the [b]map[/b] directly. A short press opens the button's normal menu.
 
 [color=#ffcc00][b]Gamepad only.[/b][/color]
 
