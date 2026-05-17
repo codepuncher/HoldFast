@@ -1,5 +1,5 @@
-#include "PCH.h"
 #include "InputHandler.h"
+#include "PCH.h"
 
 namespace logger = SKSE::log;
 
@@ -38,8 +38,8 @@ void InputHandler::UpdateShortPressMenu()
 }
 
 RE::BSEventNotifyControl InputHandler::ProcessEvent(
-	const RE::MenuOpenCloseEvent*               a_event,
-	RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
+	const RE::MenuOpenCloseEvent* a_event,
+	RE::BSTEventSource<RE::MenuOpenCloseEvent>* /*a_eventSource*/)
 {
 	if (a_event && !a_event->opening && a_event->menuName == RE::JournalMenu::MENU_NAME) {
 		UpdateShortPressMenu();
@@ -48,8 +48,8 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 }
 
 RE::BSEventNotifyControl InputHandler::ProcessEvent(
-	RE::InputEvent* const*               a_events,
-	RE::BSTEventSource<RE::InputEvent*>*)
+	RE::InputEvent* const* a_events,
+	RE::BSTEventSource<RE::InputEvent*>* /*a_eventSource*/)
 {
 	if (!a_events) {
 		return RE::BSEventNotifyControl::kContinue;
@@ -78,55 +78,74 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		if (btn->GetIDCode() != static_cast<std::uint32_t>(RE::BSWin32GamepadDevice::Key::kStart)) {
 			continue;
 		}
-
-		if (btn->IsDown()) {
-			_pressTime    = std::chrono::steady_clock::now();
-			_mapTriggered = false;
-			shouldBlock   = true;
-		} else if (btn->IsHeld() && _pressTime) {
+		if (ProcessStartButton(btn)) {
 			shouldBlock = true;
-			if (!_mapTriggered && btn->HeldDuration() >= holdDuration) {
-				auto* uiQueue = RE::UIMessageQueue::GetSingleton();
-				if (!uiQueue) {
-					logger::error("UIMessageQueue unavailable — hold threshold reached but map not opened");
-				} else {
-					uiQueue->AddMessage(RE::MapMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
-					_mapTriggered = true;
-				}
-			}
-		} else if (btn->IsUp() && _pressTime) {
-			shouldBlock = true;
-
-			const auto held = std::chrono::duration<float>(
-				std::chrono::steady_clock::now() - *_pressTime).count();
-			_pressTime.reset();
-
-			if (_mapTriggered) {
-				_mapTriggered = false;
-			} else {
-				if (held > 10.0f) {
-					logger::warn("Start press duration {:.1f}s exceeds sanity limit — discarded", held);
-					continue;
-				}
-
-				auto* uiQueue = RE::UIMessageQueue::GetSingleton();
-				if (!uiQueue) {
-					logger::error("UIMessageQueue unavailable — Start press consumed but no menu opened");
-					continue;
-				}
-
-				if (!shortPressMenuName.empty()) {
-					if (shortPressMenuName == RE::JournalMenu::MENU_NAME) {
-						using func_t = void(*)(bool);
-						static REL::Relocation<func_t> openJournal{ RELOCATION_ID(52428, 53327) };
-						openJournal(true);
-					} else {
-						uiQueue->AddMessage(shortPressMenuName, RE::UI_MESSAGE_TYPE::kShow, nullptr);
-					}
-				}
-			}
 		}
 	}
 
 	return shouldBlock ? RE::BSEventNotifyControl::kStop : RE::BSEventNotifyControl::kContinue;
+}
+
+bool InputHandler::ProcessStartButton(const RE::ButtonEvent* btn)
+{
+	if (btn->IsDown()) {
+		_pressTime = std::chrono::steady_clock::now();
+		_mapTriggered = false;
+		return true;
+	}
+
+	if (btn->IsHeld() && _pressTime) {
+		if (!_mapTriggered && btn->HeldDuration() >= holdDuration) {
+			auto* uiQueue = RE::UIMessageQueue::GetSingleton();
+			if (!uiQueue) {
+				logger::error("UIMessageQueue unavailable — hold threshold reached but map not opened");
+			} else {
+				uiQueue->AddMessage(RE::MapMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
+				_mapTriggered = true;
+			}
+		}
+		return true;
+	}
+
+	if (btn->IsUp() && _pressTime) {
+		const auto held = std::chrono::duration<float>(
+			std::chrono::steady_clock::now() - *_pressTime)
+		                      .count();
+		_pressTime.reset();
+
+		if (_mapTriggered) {
+			_mapTriggered = false;
+		} else {
+			DispatchShortPress(held);
+		}
+		return true;
+	}
+
+	return false;
+}
+
+void InputHandler::DispatchShortPress(float held) const
+{
+	if (held > 10.0F) {
+		logger::warn("Start press duration {:.1f}s exceeds sanity limit — discarded", held);
+		return;
+	}
+
+	auto* uiQueue = RE::UIMessageQueue::GetSingleton();
+	if (!uiQueue) {
+		logger::error("UIMessageQueue unavailable — Start press consumed but no menu opened");
+		return;
+	}
+
+	if (shortPressMenuName.empty()) {
+		return;
+	}
+
+	if (shortPressMenuName == RE::JournalMenu::MENU_NAME) {
+		using func_t = void (*)(bool);
+		static REL::Relocation<func_t> openJournal{ RELOCATION_ID(52428, 53327) };
+		openJournal(true);
+	} else {
+		uiQueue->AddMessage(shortPressMenuName, RE::UI_MESSAGE_TYPE::kShow, nullptr);
+	}
 }

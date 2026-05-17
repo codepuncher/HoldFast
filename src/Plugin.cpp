@@ -1,5 +1,5 @@
-#include "PCH.h"
 #include "InputHandler.h"
+#include "PCH.h"
 
 namespace logger = SKSE::log;
 
@@ -21,19 +21,19 @@ void SetupLog()
 float ReadHoldDuration()
 {
 	CSimpleIniA ini;
-	ini.LoadFile("Data\\SKSE\\Plugins\\QuickMap.ini");
+	ini.LoadFile(R"(Data\SKSE\Plugins\QuickMap.ini)");
 	const auto duration = static_cast<float>(ini.GetDoubleValue("General", "fHoldDuration", 1.0));
-	if (duration <= 0.0f) {
+	if (duration <= 0.0F) {
 		logger::warn("fHoldDuration ({:.2f}) must be positive — using default 1.0", duration);
-		return 1.0f;
+		return 1.0F;
 	}
 	return duration;
 }
 
 void OnInputLoaded()
 {
-	auto* handler          = InputHandler::GetSingleton();
-	handler->holdDuration  = ReadHoldDuration();
+	auto* handler = InputHandler::GetSingleton();
+	handler->holdDuration = ReadHoldDuration();
 	logger::info("Hold duration: {:.2f}s", handler->holdDuration);
 
 	auto* inputDeviceMgr = RE::BSInputDeviceManager::GetSingleton();
@@ -92,4 +92,3 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 
 	return true;
 }
-
