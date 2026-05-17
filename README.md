@@ -2,7 +2,7 @@
 
 Hold the gamepad **Start button** for a configurable duration to open the **world map**. A short press opens the Journal Menu (or Tween Menu) as normal.
 
-> **Gamepad only.** Keyboard and mouse users are unaffected — vanilla behaviour is fully preserved.
+> **Gamepad only.** Vanilla behaviour is fully preserved.
 
 Inspired by Red Dead Redemption 2's hold-Start-to-open-map mechanic.
 

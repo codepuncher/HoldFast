@@ -2,7 +2,7 @@
 
 ## Short Description
 
-Hold the gamepad Start button to open the world map. Short press opens the Journal as normal.
+Hold the gamepad Start button to open the world map. Short press opens the Journal (or whatever Start is bound to) as normal.
 
 ---
 
@@ -29,7 +29,7 @@ Hold the gamepad Start button to open the world map. Short press opens the Journ
 
 Hold the gamepad [b]Start button[/b] for a configurable duration to open the [b]world map[/b] directly. A short press opens the Journal Menu (or Tween Menu) as normal — vanilla behaviour is fully preserved.
 
-[color=#ffcc00][b]Gamepad only.[/b][/color] Keyboard and mouse users are unaffected.
+[color=#ffcc00][b]Gamepad only.[/b][/color]
 
 [line]
 
