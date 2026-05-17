@@ -42,6 +42,7 @@ jobs:
     needs: [changelog]
     if: >-
       ${{
+        always() &&
         (needs.changelog.result == 'success' || needs.changelog.result == 'skipped') &&
         ((github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')) ||
          (github.event_name == 'workflow_dispatch' && inputs.upload_to_nexus))
