@@ -1,7 +1,8 @@
 # QuickMap
 
-A starter template for Skyrim Special Edition / Anniversary Edition SKSE plugins using
-[CommonLibSSE-NG](https://github.com/alandtse/CommonLibVR/tree/ng), [CMake](https://cmake.org), and [vcpkg](https://vcpkg.io).
+Hold the gamepad **Start button** for a configurable duration to open the **world map**. A short press opens whatever Start is natively bound to (Journal Menu or Tween Menu) as normal.
+
+Inspired by Red Dead Redemption 2's hold-start-to-open-map mechanic.
 
 Supports building on **Linux** (cross-compilation via `clang-cl` + [xwin](https://github.com/Jake-Shadle/xwin)) and **Windows** (MSVC).
 
@@ -37,42 +38,16 @@ Supports building on **Linux** (cross-compilation via `clang-cl` + [xwin](https:
 
 ## Getting Started
 
-### 1. Use this template
-
-Click **"Use this template"** on GitHub, or clone and re-initialise:
+### 1. Clone
 
 ```bash
-git clone https://github.com/your-org/your-mod.git
-cd your-mod
+git clone --recurse-submodules https://github.com/codepuncher/QuickMap.git
+cd QuickMap
 ```
 
-### 2. Run the init script
+### 2. Configure deploy path
 
-**Linux** — run interactively or pass arguments directly:
-
-```bash
-./scripts/init.sh
-# or:
-./scripts/init.sh "codepuncherName" "ModName"
-```
-
-**Windows (PowerShell)**:
-
-```powershell
-.\scripts\init.ps1
-# or:
-.\scripts\init.ps1 "codepuncherName" "ModName"
-```
-
-This will:
-- Replace mod name and author placeholders across all files
-- Initialise git submodules (CommonLibSSE-NG + vcpkg)
-- Bootstrap vcpkg
-- Copy `.env.example` → `.env` with a reminder to fill in your paths
-
-### 3. Configure deploy path
-
-Edit the `.env` file created by the init script and set `SKYRIM_MODS_FOLDER` to your mod manager's staging folder:
+Edit `.env` and set `SKYRIM_MODS_FOLDER` to your mod manager's staging folder:
 
 ```bash
 # Vortex (Linux, Steam):
@@ -82,7 +57,7 @@ SKYRIM_MODS_FOLDER=$HOME/.local/share/Steam/steamapps/common/Vortex Mods/skyrims
 # SKYRIM_MODS_FOLDER=$HOME/MO2/mods
 ```
 
-### 4. Build
+### 3. Build
 
 ```bash
 ./scripts/build.sh
@@ -132,13 +107,20 @@ The DLL lands in `build/msvc/Release/QuickMap.dll`.
 
 ---
 
-## What the Starter Plugin Does
+## What QuickMap Does
 
 When loaded by Skyrim the plugin:
 
 1. **Writes a log** to `Data/SKSE/Plugins/QuickMap.log` via spdlog.
 2. **Registers an input sink** at `kInputLoaded` to intercept gamepad Start button events.
 3. **Refreshes the short-press binding** at `kInputLoaded`, `kPostLoadGame`, and `kNewGame` by querying `ControlMap`.
+
+Hold duration is configurable via `Data/SKSE/Plugins/QuickMap.ini`:
+
+```ini
+[General]
+fHoldDuration=1.0
+```
 
 ---
 

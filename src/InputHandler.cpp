@@ -138,6 +138,7 @@ void InputHandler::DispatchShortPress(float held) const
 	}
 
 	if (shortPressMenuName.empty()) {
+		logger::warn("Start short press has no known binding — press consumed but no menu opened");
 		return;
 	}
 
