@@ -2,7 +2,7 @@
 
 ## Short Description
 
-Hold the gamepad Start button to open the world map. Short press opens the Journal (or whatever Start is bound to) as normal.
+Hold the gamepad Start button to open the world map. Short press opens whatever menu Start is bound to in your controls.
 
 ---
 
@@ -27,7 +27,7 @@ Hold the gamepad Start button to open the world map. Short press opens the Journ
 
 [size=4][b]Overview[/b][/size]
 
-Hold the gamepad [b]Start button[/b] for a configurable duration to open the [b]world map[/b] directly. A short press opens whatever Start is bound to in your controls.
+Hold the gamepad [b]Start button[/b] for a configurable duration to open the [b]world map[/b] directly. A short press opens whatever menu Start is bound to in your controls.
 
 [color=#ffcc00][b]Gamepad only.[/b][/color]
 

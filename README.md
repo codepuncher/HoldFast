@@ -1,6 +1,6 @@
 # QuickMap
 
-Hold the gamepad **Start button** for a configurable duration to open the **world map**. A short press opens whatever Start is bound to in your controls.
+Hold the gamepad **Start button** for a configurable duration to open the **world map**. A short press opens whatever menu Start is bound to in your controls.
 
 > **Gamepad only.** Default behaviour is fully preserved.
 
