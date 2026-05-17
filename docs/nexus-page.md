@@ -85,6 +85,8 @@ fHoldDuration=0.5
 
 [list]
 [*]Inspired by [b]Red Dead Redemption 2[/b]
-[*][url=https://github.com/alandtse/CommonLibVR]CommonLibSSE-NG[/url] by alandtse and contributors
+[*][url=https://skse.silverlock.org/]SKSE[/url] by the SKSE Team
+[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE plugins[/url] by [url=https://www.nexusmods.com/profile/meh321]meh321[/url]
+[*][url=https://github.com/alandtse/CommonLibVR]CommonLibSSE-NG[/url] by [url=https://github.com/alandtse]alandtse[/url] and contributors
 [/list]
 ```
