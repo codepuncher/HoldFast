@@ -20,7 +20,7 @@ public:
 	float             holdDuration{ kDefaultHoldDuration };
 	RE::BSFixedString shortPressUserEvent;
 
-	// Queries ControlMap for the menu bound to Start and caches it in shortPressMenuName.
+	// Queries ControlMap for the user event bound to Start and caches it in shortPressUserEvent.
 	// Call at kInputLoaded, kPostLoadGame, and kNewGame.
 	void UpdateShortPressMenu();
 
