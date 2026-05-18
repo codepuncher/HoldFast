@@ -24,7 +24,7 @@ public:
 	};
 
 	void SetHoldDuration(float a_duration) noexcept { holdDuration = a_duration; }
-	void SetButton(std::uint32_t a_keyCode, std::string a_name);
+	void SetButton(std::uint32_t a_keyCode, std::string a_name) noexcept;
 
 	// Queries ControlMap for the user event bound to the configured button and caches it.
 	// Call at kInputLoaded, kPostLoadGame, and kNewGame.

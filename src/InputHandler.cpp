@@ -10,7 +10,7 @@ InputHandler* InputHandler::GetSingleton()
 	return &instance;
 }
 
-void InputHandler::SetButton(std::uint32_t a_keyCode, std::string a_name)
+void InputHandler::SetButton(std::uint32_t a_keyCode, std::string a_name) noexcept
 {
 	buttonKeyCode = a_keyCode;
 	buttonName = std::move(a_name);
