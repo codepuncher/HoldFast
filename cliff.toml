@@ -24,7 +24,7 @@ commit_parsers = [
     { message = "^test", skip = true },
     { message = "^feat", group = "New Features" },
     { message = "^fix", group = "Bug Fixes" },
-    { message = "^perf", group = "Bug Fixes" },
+    { message = "^perf", group = "Performance Improvements" },
     { message = ".*", skip = true },
 ]
 filter_commits = true
