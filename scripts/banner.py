@@ -120,9 +120,14 @@ def parse_args() -> argparse.Namespace:
         if n <= 0:
             raise argparse.ArgumentTypeError("must be a positive integer")
         return n
-    parser.add_argument("--width",       default=DEFAULT_WIDTH,     type=positive_int, help="Canvas width in pixels")
-    parser.add_argument("--height",      default=DEFAULT_HEIGHT,    type=positive_int, help="Canvas height in pixels")
-    parser.add_argument("--font-size",   default=BASE_FONT_SIZE,    type=positive_int, help="Base font size in points (subtitle and tags scale proportionally)")
+    def font_size_int(v: str) -> int:
+        n = int(v)
+        if n < 30:
+            raise argparse.ArgumentTypeError("must be >= 30 (tags font is base // 5, minimum 6pt)")
+        return n
+    parser.add_argument("--width",       default=DEFAULT_WIDTH,     type=positive_int,  help="Canvas width in pixels")
+    parser.add_argument("--height",      default=DEFAULT_HEIGHT,    type=positive_int,  help="Canvas height in pixels")
+    parser.add_argument("--font-size",   default=BASE_FONT_SIZE,    type=font_size_int, help="Base font size in points (subtitle and tags scale proportionally, min 30)")
     parser.add_argument("--no-vignette", action="store_true",       help="Disable radial vignette")
     return parser.parse_args()
 
