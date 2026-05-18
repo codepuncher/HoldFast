@@ -1,8 +1,9 @@
 name: Nexus Mods Upload
 
 on:
-  release:
-    types: [published]
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       version:
@@ -14,6 +15,7 @@ permissions: {}
 
 jobs:
   upload:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
 
     permissions:
@@ -24,10 +26,10 @@ jobs:
         id: version
         shell: bash
         env:
-          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          WORKFLOW_RUN_TAG: ${{ github.event.workflow_run.head_branch }}
           INPUT_VERSION: ${{ inputs.version }}
         run: |
-          VERSION="${RELEASE_TAG#v}"
+          VERSION="${WORKFLOW_RUN_TAG#v}"
           VERSION="${VERSION:-$INPUT_VERSION}"
           if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
             echo "Error: version must be in format X.Y.Z without 'v' prefix (e.g. 1.0.0)" >&2
