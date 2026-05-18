@@ -10,7 +10,7 @@ InputHandler* InputHandler::GetSingleton()
 	return &instance;
 }
 
-void InputHandler::SetButton(std::uint32_t a_keyCode, std::string a_name)
+void InputHandler::SetButton(std::uint32_t a_keyCode, std::string a_name) noexcept
 {
 	buttonKeyCode = a_keyCode;
 	buttonName = std::move(a_name);
@@ -105,16 +105,15 @@ bool InputHandler::ProcessButton(const RE::ButtonEvent* btn)
 	}
 
 	if (btn->IsUp() && _pressTime) {
-		const auto held = std::chrono::duration<float>(
-			std::chrono::steady_clock::now() - *_pressTime)
-		                      .count();
-		_pressTime.reset();
-
 		if (_mapTriggered) {
 			_mapTriggered = false;
 		} else {
+			const auto held = std::chrono::duration<float>(
+				std::chrono::steady_clock::now() - *_pressTime)
+			                      .count();
 			DispatchShortPress(held);
 		}
+		_pressTime.reset();
 		return true;
 	}
 

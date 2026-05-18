@@ -38,7 +38,7 @@ struct ButtonDef
 	std::string   displayName;
 };
 
-std::pair<std::uint32_t, std::string> ReadButton(const CSimpleIniA& a_ini)
+ButtonDef ReadButton(const CSimpleIniA& a_ini)
 {
 	using Key = RE::BSWin32GamepadDevice::Key;
 
@@ -56,10 +56,10 @@ std::pair<std::uint32_t, std::string> ReadButton(const CSimpleIniA& a_ini)
 	const auto it = kButtonMap.find(lower);
 	if (it == kButtonMap.end()) {
 		logger::warn("sButton '{}' is not a recognised button (valid: Start, Back) — using Start", raw);
-		return { InputHandler::kDefaultButton, "Start" };
+		return { .keyCode = InputHandler::kDefaultButton, .displayName = "Start" };
 	}
 
-	return { it->second.keyCode, it->second.displayName };
+	return it->second;
 }
 
 void OnInputLoaded()
