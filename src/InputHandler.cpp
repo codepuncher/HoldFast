@@ -2,8 +2,6 @@
 
 #include "InputHandler.h"
 
-namespace logger = SKSE::log;
-
 InputHandler* InputHandler::GetSingleton()
 {
 	static InputHandler instance;
