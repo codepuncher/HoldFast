@@ -154,7 +154,9 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 
 	case LongPressAction::kSystem:
 		if (sJournalTabIdx.get()) {
-			_savedTabIdx = *sJournalTabIdx;
+			if (!_tabRestorePending) {
+				_savedTabIdx = *sJournalTabIdx;
+			}
 			_tabRestorePending = true;
 			*sJournalTabIdx = JournalTab::kSystem;
 		} else {
@@ -165,7 +167,9 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 
 	case LongPressAction::kQuests:
 		if (sJournalTabIdx.get()) {
-			_savedTabIdx = *sJournalTabIdx;
+			if (!_tabRestorePending) {
+				_savedTabIdx = *sJournalTabIdx;
+			}
 			_tabRestorePending = true;
 			*sJournalTabIdx = JournalTab::kQuest;
 		} else {
@@ -176,7 +180,9 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 
 	case LongPressAction::kStats:
 		if (sJournalTabIdx.get()) {
-			_savedTabIdx = *sJournalTabIdx;
+			if (!_tabRestorePending) {
+				_savedTabIdx = *sJournalTabIdx;
+			}
 			_tabRestorePending = true;
 			*sJournalTabIdx = JournalTab::kStats;
 		} else {
