@@ -49,7 +49,9 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 			// Journal opened — our tab write has been consumed. Restore the original value
 			// so subsequent player-initiated opens use their own last-visited tab.
 			if (_tabRestorePending) {
-				*sJournalTabIdx = _savedTabIdx;
+				if (sJournalTabIdx.get()) {
+					*sJournalTabIdx = _savedTabIdx;
+				}
 				_tabRestorePending = false;
 			}
 		} else {
@@ -151,23 +153,35 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 		break;
 
 	case LongPressAction::kSystem:
-		_savedTabIdx = *sJournalTabIdx;
-		_tabRestorePending = true;
-		*sJournalTabIdx = JournalTab::kSystem;
+		if (sJournalTabIdx.get()) {
+			_savedTabIdx = *sJournalTabIdx;
+			_tabRestorePending = true;
+			*sJournalTabIdx = JournalTab::kSystem;
+		} else {
+			logger::warn("{} long press: sJournalTabIdx unavailable — opening Journal on last-visited tab", state.name);
+		}
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
 
 	case LongPressAction::kQuests:
-		_savedTabIdx = *sJournalTabIdx;
-		_tabRestorePending = true;
-		*sJournalTabIdx = JournalTab::kQuest;
+		if (sJournalTabIdx.get()) {
+			_savedTabIdx = *sJournalTabIdx;
+			_tabRestorePending = true;
+			*sJournalTabIdx = JournalTab::kQuest;
+		} else {
+			logger::warn("{} long press: sJournalTabIdx unavailable — opening Journal on last-visited tab", state.name);
+		}
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
 
 	case LongPressAction::kStats:
-		_savedTabIdx = *sJournalTabIdx;
-		_tabRestorePending = true;
-		*sJournalTabIdx = JournalTab::kStats;
+		if (sJournalTabIdx.get()) {
+			_savedTabIdx = *sJournalTabIdx;
+			_tabRestorePending = true;
+			*sJournalTabIdx = JournalTab::kStats;
+		} else {
+			logger::warn("{} long press: sJournalTabIdx unavailable — opening Journal on last-visited tab", state.name);
+		}
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
 
