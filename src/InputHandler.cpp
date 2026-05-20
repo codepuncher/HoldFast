@@ -44,8 +44,17 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 	const RE::MenuOpenCloseEvent* a_event,
 	RE::BSTEventSource<RE::MenuOpenCloseEvent>* /*a_eventSource*/)
 {
-	if (a_event && !a_event->opening && a_event->menuName == RE::JournalMenu::MENU_NAME) {
-		UpdateShortPressBinding();
+	if (a_event && a_event->menuName == RE::JournalMenu::MENU_NAME) {
+		if (a_event->opening) {
+			// Journal opened — our tab write has been consumed. Restore the original value
+			// so subsequent player-initiated opens use their own last-visited tab.
+			if (_tabRestorePending) {
+				*sJournalTabIdx = _savedTabIdx;
+				_tabRestorePending = false;
+			}
+		} else {
+			UpdateShortPressBinding();
+		}
 	}
 	return RE::BSEventNotifyControl::kContinue;
 }
@@ -96,7 +105,7 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 	return shouldBlock ? RE::BSEventNotifyControl::kStop : RE::BSEventNotifyControl::kContinue;
 }
 
-bool InputHandler::ProcessButton(const RE::ButtonEvent* btn, ButtonState& state) const
+bool InputHandler::ProcessButton(const RE::ButtonEvent* btn, ButtonState& state)
 {
 	if (btn->IsDown()) {
 		state.pressTime = std::chrono::steady_clock::now();
@@ -142,20 +151,22 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 		break;
 
 	case LongPressAction::kSystem:
-		// Write sJournalTabIdx only after confirming uiQueue is available. If kShow is
-		// subsequently blocked by the game (scripted scene, KI lockout, etc.) the tab index
-		// stays set to kSystem until the player next navigates inside the Journal — it heals
-		// after one open/tab-change cycle.
+		_savedTabIdx = *sJournalTabIdx;
+		_tabRestorePending = true;
 		*sJournalTabIdx = JournalTab::kSystem;
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
 
 	case LongPressAction::kQuests:
+		_savedTabIdx = *sJournalTabIdx;
+		_tabRestorePending = true;
 		*sJournalTabIdx = JournalTab::kQuest;
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
 
 	case LongPressAction::kStats:
+		_savedTabIdx = *sJournalTabIdx;
+		_tabRestorePending = true;
 		*sJournalTabIdx = JournalTab::kStats;
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;

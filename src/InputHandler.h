@@ -77,10 +77,15 @@ private:
 		bool                                                 triggered{ false };
 	};
 
-	bool        ProcessButton(const RE::ButtonEvent* btn, ButtonState& state) const;
+	bool        ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
 	static void DispatchShortPress(const ButtonState& state, float held);
-	static void DispatchLongPress(const ButtonState& state);
+	void        DispatchLongPress(const ButtonState& state);
 
 	float                    holdDuration{ kDefaultHoldDuration };
 	std::vector<ButtonState> _buttons;
+
+	// Saved tab index used to restore sJournalTabIdx once the Journal has opened,
+	// so a tab-specific long-press does not permanently override the player's last-visited tab.
+	JournalTab _savedTabIdx{ JournalTab::kQuest };
+	bool       _tabRestorePending{ false };
 };
