@@ -49,7 +49,7 @@ float ReadHoldDuration(const CSimpleIniA& a_ini)
 
 using LongPressAction = InputHandler::LongPressAction;
 
-LongPressAction ReadLongPressAction(const std::string& raw)
+LongPressAction ReadLongPressAction(const std::string& raw, const char* iniKey)
 {
 	static const std::unordered_map<std::string, LongPressAction> kActionMap{
 		{ "map", LongPressAction::kMap },
@@ -66,7 +66,7 @@ LongPressAction ReadLongPressAction(const std::string& raw)
 
 	const auto it = kActionMap.find(lower);
 	if (it == kActionMap.end()) {
-		logger::warn("'{}' is not a recognised action (valid: Map, System, Quests, Journal, None) — disabling button", raw);
+		logger::warn("{}='{}' is not a recognised action (valid: Map, System, Quests, Journal, None) — disabling button", iniKey, raw);
 		return LongPressAction::kNone;
 	}
 	return it->second;
@@ -123,7 +123,7 @@ std::vector<ButtonConfig> ReadButtons(const CSimpleIniA& a_ini)
 		if (!raw) {
 			continue;  // absent key → kNone, no warning
 		}
-		const auto action = ReadLongPressAction(raw);
+		const auto action = ReadLongPressAction(raw, def.iniKey);
 		if (action == LongPressAction::kNone) {
 			continue;  // kNone entries are excluded
 		}
