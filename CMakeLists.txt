@@ -136,7 +136,7 @@ endif()
 # Always clear then recompute so .env changes take effect without a cache wipe.
 # DEPLOY_DIR_OVERRIDE (if set) wins over the env-derived default.
 unset(DEPLOY_DIR CACHE)
-if(DEPLOY_DIR_OVERRIDE)
+if(NOT DEPLOY_DIR_OVERRIDE STREQUAL "")
     set(DEPLOY_DIR "${DEPLOY_DIR_OVERRIDE}")
 else()
     set(DEPLOY_DIR "${_default_deploy}")
