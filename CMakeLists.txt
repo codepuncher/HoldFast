@@ -118,7 +118,10 @@ endif()
 
 set(DEPLOY_DIR_OVERRIDE
     ""
-    CACHE PATH "Override deploy destination (leave empty to derive from SKYRIM_MODS_FOLDER or SKYRIM_FOLDER in .env)")
+    CACHE
+        PATH
+        "Override deploy destination (leave empty to derive from SKYRIM_MODS_FOLDER or SKYRIM_FOLDER in the environment, optionally sourced from .env)"
+)
 
 # Migrate legacy -DDEPLOY_DIR=... cache entries to DEPLOY_DIR_OVERRIDE so existing
 # build trees don't silently lose their override.
@@ -128,9 +131,10 @@ if(DEFINED CACHE{DEPLOY_DIR} AND DEPLOY_DIR_OVERRIDE STREQUAL "")
                     "Use -DDEPLOY_DIR_OVERRIDE=... in future configures.")
     set(DEPLOY_DIR_OVERRIDE
         "${DEPLOY_DIR}"
-        CACHE PATH
-              "Override deploy destination (leave empty to derive from SKYRIM_MODS_FOLDER or SKYRIM_FOLDER in .env)"
-              FORCE)
+        CACHE
+            PATH
+            "Override deploy destination (leave empty to derive from SKYRIM_MODS_FOLDER or SKYRIM_FOLDER in the environment, optionally sourced from .env)"
+            FORCE)
 endif()
 
 # Always clear then recompute so .env changes take effect without a cache wipe.
