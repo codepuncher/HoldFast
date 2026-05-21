@@ -151,53 +151,37 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 	case LongPressAction::kMap:
 		uiQueue->AddMessage(RE::MapMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
-
 	case LongPressAction::kSystem:
-		if (sJournalTabIdx.get()) {
-			if (!_tabRestorePending) {
-				_savedTabIdx = *sJournalTabIdx;
-			}
-			_tabRestorePending = true;
-			*sJournalTabIdx = JournalTab::kSystem;
-		} else {
-			logger::warn("{} long press: sJournalTabIdx unavailable — opening Journal on last-visited tab", state.name);
-		}
+		OpenJournalOnTab(JournalTab::kSystem, state.name);
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
-
 	case LongPressAction::kQuests:
-		if (sJournalTabIdx.get()) {
-			if (!_tabRestorePending) {
-				_savedTabIdx = *sJournalTabIdx;
-			}
-			_tabRestorePending = true;
-			*sJournalTabIdx = JournalTab::kQuest;
-		} else {
-			logger::warn("{} long press: sJournalTabIdx unavailable — opening Journal on last-visited tab", state.name);
-		}
+		OpenJournalOnTab(JournalTab::kQuest, state.name);
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
-
 	case LongPressAction::kStats:
-		if (sJournalTabIdx.get()) {
-			if (!_tabRestorePending) {
-				_savedTabIdx = *sJournalTabIdx;
-			}
-			_tabRestorePending = true;
-			*sJournalTabIdx = JournalTab::kStats;
-		} else {
-			logger::warn("{} long press: sJournalTabIdx unavailable — opening Journal on last-visited tab", state.name);
-		}
+		OpenJournalOnTab(JournalTab::kStats, state.name);
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
-
 	case LongPressAction::kJournal:
 		uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 		break;
-
 	default:
 		break;
 	}
+}
+
+void InputHandler::OpenJournalOnTab(JournalTab tab, const std::string& buttonName)
+{
+	if (!sJournalTabIdx.get()) {
+		logger::warn("{} long press: sJournalTabIdx unavailable — opening Journal on last-visited tab", buttonName);
+		return;
+	}
+	if (!_tabRestorePending) {
+		_savedTabIdx = *sJournalTabIdx;
+	}
+	_tabRestorePending = true;
+	*sJournalTabIdx = tab;
 }
 
 void InputHandler::DispatchShortPress(const ButtonState& state, float held)

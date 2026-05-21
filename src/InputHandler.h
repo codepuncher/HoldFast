@@ -80,6 +80,7 @@ private:
 	bool        ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
 	static void DispatchShortPress(const ButtonState& state, float held);
 	void        DispatchLongPress(const ButtonState& state);
+	void        OpenJournalOnTab(JournalTab tab, const std::string& buttonName);
 
 	float                    holdDuration{ kDefaultHoldDuration };
 	std::vector<ButtonState> _buttons;
