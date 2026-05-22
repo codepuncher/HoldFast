@@ -76,8 +76,9 @@ source_group("Resources" FILES "${CMAKE_CURRENT_BINARY_DIR}/src/version.rc")
 # The xwin SDK paths are in CMAKE_C_FLAGS_INIT as /imsvc flags and are invisible to cmake_llvm_rc,
 # so we add them explicitly here for the RC compiler to find winres.h.
 if(DEFINED XWIN_DIR)
-    target_include_directories(${PROJECT_NAME} SYSTEM PRIVATE "${XWIN_DIR}/sdk/include/um"
-                                                              "${XWIN_DIR}/sdk/include/shared")
+    target_include_directories(
+        ${PROJECT_NAME} SYSTEM PRIVATE "$<$<COMPILE_LANGUAGE:RC>:${XWIN_DIR}/sdk/include/um>"
+                                       "$<$<COMPILE_LANGUAGE:RC>:${XWIN_DIR}/sdk/include/shared>")
 endif()
 
 target_precompile_headers(${PROJECT_NAME} PRIVATE src/PCH.h)
@@ -101,7 +102,7 @@ endif()
 include(CheckIPOSupported)
 check_ipo_supported(RESULT _ipo_supported OUTPUT _ipo_output)
 if(_ipo_supported)
-    set_target_properties(${PROJECT_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+    set_target_properties(${PROJECT_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
 else()
     message(VERBOSE "IPO not supported: ${_ipo_output}")
 endif()
