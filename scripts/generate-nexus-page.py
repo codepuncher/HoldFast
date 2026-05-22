@@ -83,11 +83,14 @@ def md_to_bbcode(md: str) -> str:
 
         # Fenced code block (```lang or plain ```)
         if line.startswith("```"):
+            fence_start = i
             i += 1
             code_lines: list[str] = []
             while i < len(lines) and not lines[i].startswith("```"):
                 code_lines.append(lines[i])
                 i += 1
+            if i >= len(lines):
+                sys.exit(f"error: unterminated fenced code block opened at line {fence_start + 1}")
             i += 1  # skip closing ```
             output.append("[code]")
             output.extend(code_lines)
