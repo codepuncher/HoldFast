@@ -145,7 +145,7 @@ def main() -> None:
     # Shrink font until title fits within the canvas (leaving DIVIDER_X_PAD on each side).
     max_title_w = W - DIVIDER_X_PAD * 2
     _tmp_draw   = ImageDraw.Draw(Image.new("RGB", (1, 1)))
-    while base >= 30:
+    while base > 30:
         title_font = ImageFont.truetype(str(font_path), base)
         _bb        = _tmp_draw.textbbox((0, 0), args.title, font=title_font)
         if (_bb[2] - _bb[0]) <= max_title_w:
