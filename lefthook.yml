@@ -20,6 +20,8 @@ pre-commit:
         - "src/*.h"
         - "src/**/*.cpp"
         - "src/**/*.h"
+        - "test/*.cpp"
+        - "test/**/*.cpp"
       run: clang-format -i {staged_files}
       stage_fixed: true
     cmake-format:

@@ -20,7 +20,7 @@ TEST_CASE("TrimWhitespace removes leading and trailing whitespace", "[utils]")
 TEST_CASE("ClampHoldDuration clamps and validates values", "[utils]")
 {
 	constexpr float kDefault = 0.5F;
-	constexpr float kMax     = 5.0F;
+	constexpr float kMax = 5.0F;
 
 	CHECK(ClampHoldDuration(1.0F, kDefault, kMax) == 1.0F);
 	CHECK(ClampHoldDuration(2.5F, kDefault, kMax) == 2.5F);
