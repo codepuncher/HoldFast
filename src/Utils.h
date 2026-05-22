@@ -26,5 +26,4 @@ namespace QuickMap
 		}
 		return value;
 	}
-
-}  // namespace QuickMap
+}
