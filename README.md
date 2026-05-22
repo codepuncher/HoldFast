@@ -48,7 +48,7 @@ sButtonBackAction=System
 
 | Value | What it does |
 |-------|-------------|
-| `Map` | Opens the world map |
+| `Map` | Opens the map |
 | `System` | Opens the Journal on the System tab |
 | `Quests` | Opens the Journal on the Quests tab |
 | `Stats` | Opens the Journal on the Stats tab |

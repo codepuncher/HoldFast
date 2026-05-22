@@ -84,7 +84,7 @@ sButtonBackAction=System
 
 [b]Valid actions:[/b]
 [list]
-[*][b]Map[/b] — opens the world map
+[*][b]Map[/b] — opens the map
 [*][b]System[/b] — opens the Journal on the System tab
 [*][b]Quests[/b] — opens the Journal on the Quests tab
 [*][b]Stats[/b] — opens the Journal on the Stats tab
