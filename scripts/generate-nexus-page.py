@@ -81,6 +81,32 @@ def md_to_bbcode(md: str) -> str:
             output.append("[/list]")
             continue
 
+        # Fenced code block (```lang or plain ```)
+        if line.startswith("```"):
+            i += 1
+            code_lines: list[str] = []
+            while i < len(lines) and not lines[i].startswith("```"):
+                code_lines.append(lines[i])
+                i += 1
+            i += 1  # skip closing ```
+            output.append("[code]")
+            output.extend(code_lines)
+            output.append("[/code]")
+            continue
+
+        # Markdown pipe table — render data rows as a list (header and separator skipped)
+        if line.startswith("|"):
+            table_lines: list[str] = []
+            while i < len(lines) and lines[i].startswith("|"):
+                table_lines.append(lines[i])
+                i += 1
+            output.append("[list]")
+            for row in table_lines[2:]:  # skip header row [0] and separator row [1]
+                cells = [convert_inline(c.strip()) for c in row.strip("|").split("|")]
+                output.append(f"[*]{' — '.join(cells)}")
+            output.append("[/list]")
+            continue
+
         # Bold label (e.g. **Mod manager (recommended):**)
         if re.match(r"\*\*.+\*\*", line):
             output.append(convert_inline(line))
