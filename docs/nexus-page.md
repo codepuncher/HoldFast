@@ -21,7 +21,7 @@ Hold a gamepad button (Start or Back) to open a menu directly — map, journal, 
 
 ```bbcode
 [center][size=5][b]QuickMap[/b][/size]
-[i]Hold Start · Open the Map. Hold Back · Open the System Page.[/i][/center]
+[i]Hold a gamepad button · Open the Map or Journal — fully configurable.[/i][/center]
 
 [line]
 
