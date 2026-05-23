@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class InputHandler :
@@ -34,6 +35,11 @@ public:
 		kSystem,
 		kQuests,
 		kStats,
+		kInventory,
+		kMagic,
+		kFavorites,
+		kTweenMenu,
+		kWait,
 	};
 
 	struct ButtonConfig
@@ -77,6 +83,8 @@ private:
 
 	bool        ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
 	static bool DispatchViaMenuOpenHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool DispatchViaFavoritesHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool DispatchViaHandler(RE::MenuEventHandler* handler, std::string_view handlerName, const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
 	static void DispatchShortPress(const ButtonState& state, float held);
 	void        DispatchLongPress(const ButtonState& state);
 	void        OpenJournalOnTab(JournalTab tab, const std::string& buttonName);

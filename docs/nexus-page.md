@@ -78,10 +78,10 @@ Edit [font=Courier New]Data\SKSE\Plugins\HoldFast.ini[/font]:
 ; Duration in seconds a button must be held to trigger its long-press action (default: 0.5, max: 5.0)
 fHoldDuration=0.5
 ; Long-press action for the Start (Menu) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, None (case-insensitive)
 sButtonStartAction=Map
 ; Long-press action for the Back (View) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, None (case-insensitive)
 sButtonBackAction=System
 [/code]
 
@@ -92,6 +92,11 @@ sButtonBackAction=System
 [*][font=Courier New]System[/font] — Opens the Journal on the System tab
 [*][font=Courier New]Quests[/font] — Opens the Journal on the Quests tab
 [*][font=Courier New]Stats[/font] — Opens the Journal on the Stats tab
+[*][font=Courier New]Inventory[/font] — Opens the inventory
+[*][font=Courier New]Magic[/font] — Opens the magic menu
+[*][font=Courier New]Favorites[/font] — Opens the favourites menu
+[*][font=Courier New]TweenMenu[/font] — Opens the tween menu (Items/Magic/Map/Skills)
+[*][font=Courier New]Wait[/font] — Opens the sleep/wait menu
 [*][font=Courier New]None[/font] — Button not intercepted
 [/list]
 

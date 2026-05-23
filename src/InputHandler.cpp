@@ -148,48 +148,94 @@ bool InputHandler::ProcessButton(const RE::ButtonEvent* btn, ButtonState& state)
 
 void InputHandler::DispatchLongPress(const ButtonState& state)
 {
-	if (state.action == LongPressAction::kMap) {
-		auto* uiQueue = RE::UIMessageQueue::GetSingleton();
-		if (!uiQueue) {
-			logger::error("{} long press: UIMessageQueue unavailable — action not dispatched", state.name);
+	const std::string logCtx = state.name + " long press";
+
+	// UIMessageQueue direct-open actions — no gamepad UserEvent path exists for these.
+	// InventoryMenu (context=kNone) and MagicMenu (context=kItemMenu) are not handled by
+	// menuOpenHandler in the Gameplay context; direct AddMessage is the only viable path.
+	switch (state.action) {
+	case LongPressAction::kMap:
+	case LongPressAction::kMagic:
+	case LongPressAction::kInventory:
+		{
+			auto* uiQueue = RE::UIMessageQueue::GetSingleton();
+			if (!uiQueue) {
+				logger::error("{}: UIMessageQueue unavailable — action not dispatched", logCtx);
+				return;
+			}
+			std::string_view menuName;
+			switch (state.action) {
+			case LongPressAction::kMap:
+				menuName = RE::MapMenu::MENU_NAME;
+				break;
+			case LongPressAction::kMagic:
+				menuName = RE::MagicMenu::MENU_NAME;
+				break;
+			default:
+				menuName = RE::InventoryMenu::MENU_NAME;
+				break;
+			}
+			logger::info("{}: opening {}", logCtx, menuName);
+			uiQueue->AddMessage(menuName, RE::UI_MESSAGE_TYPE::kShow, nullptr);
 			return;
 		}
-		logger::info("{} long press: opening Map", state.name);
-		uiQueue->AddMessage(RE::MapMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kShow, nullptr);
-		return;
+	default:
+		break;
 	}
 
 	auto* userEvents = RE::UserEvents::GetSingleton();
 	if (!userEvents) {
-		logger::error("{} long press: UserEvents unavailable — action not dispatched", state.name);
+		logger::error("{}: UserEvents unavailable — action not dispatched", logCtx);
 		return;
 	}
 
-	logger::info("{} long press: opening Journal", state.name);
-
-	JournalTab targetTab = JournalTab::kQuest;
 	switch (state.action) {
-	case LongPressAction::kSystem:
-		targetTab = JournalTab::kSystem;
-		break;
-	case LongPressAction::kStats:
-		targetTab = JournalTab::kStats;
-		break;
-	default:
-		break;  // kQuests: kQuest(0) — game resets sJournalTabIdx to 0 anyway, but we still save/restore
-	}
-
-	OpenJournalOnTab(targetTab, state.name);
-
-	if (!DispatchViaMenuOpenHandler(userEvents->journal, state.keyCode, state.name + " long press")) {
-		RestoreJournalTab();
+	case LongPressAction::kTweenMenu:
+		logger::info("{}: opening Tween Menu", logCtx);
+		DispatchViaMenuOpenHandler(userEvents->tweenMenu, state.keyCode, logCtx);
 		return;
-	}
 
-	// Re-write target tab after menuOpenHandler->ProcessButton() resets sJournalTabIdx internally.
-	// AddMessage is queued for the next frame so the Journal will read our value.
-	if (sJournalTabIdx.get()) {
-		*sJournalTabIdx = static_cast<std::uint32_t>(targetTab);
+	case LongPressAction::kWait:
+		logger::info("{}: opening Sleep/Wait", logCtx);
+		DispatchViaMenuOpenHandler(userEvents->wait, state.keyCode, logCtx);
+		return;
+
+	case LongPressAction::kFavorites:
+		logger::info("{}: opening Favorites", logCtx);
+		DispatchViaFavoritesHandler(userEvents->favorites, state.keyCode, logCtx);
+		return;
+
+	case LongPressAction::kQuests:
+	case LongPressAction::kSystem:
+	case LongPressAction::kStats:
+		{
+			logger::info("{}: opening Journal", logCtx);
+			JournalTab targetTab = JournalTab::kQuest;
+			switch (state.action) {
+			case LongPressAction::kSystem:
+				targetTab = JournalTab::kSystem;
+				break;
+			case LongPressAction::kStats:
+				targetTab = JournalTab::kStats;
+				break;
+			default:
+				break;  // kQuests: kQuest(0)
+			}
+			OpenJournalOnTab(targetTab, state.name);
+			if (!DispatchViaMenuOpenHandler(userEvents->journal, state.keyCode, logCtx)) {
+				RestoreJournalTab();
+				return;
+			}
+			// Re-write target tab after menuOpenHandler->ProcessButton() resets sJournalTabIdx internally.
+			// AddMessage is queued for the next frame so the Journal will read our value.
+			if (sJournalTabIdx.get()) {
+				*sJournalTabIdx = static_cast<std::uint32_t>(targetTab);
+			}
+			return;
+		}
+
+	default:
+		return;
 	}
 }
 
@@ -207,7 +253,33 @@ bool InputHandler::DispatchViaMenuOpenHandler(
 		logger::error("{}: menuOpenHandler unavailable — action not dispatched", logContext);
 		return false;
 	}
+	return DispatchViaHandler(menuControls->menuOpenHandler, "menuOpenHandler", userEvent, keyCode, logContext);
+}
 
+bool InputHandler::DispatchViaFavoritesHandler(
+	const RE::BSFixedString& userEvent,
+	std::uint32_t            keyCode,
+	const std::string&       logContext)
+{
+	auto* menuControls = RE::MenuControls::GetSingleton();
+	if (!menuControls) {
+		logger::error("{}: MenuControls unavailable — action not dispatched", logContext);
+		return false;
+	}
+	if (!menuControls->favoritesHandler) {
+		logger::error("{}: favoritesHandler unavailable — action not dispatched", logContext);
+		return false;
+	}
+	return DispatchViaHandler(menuControls->favoritesHandler, "favoritesHandler", userEvent, keyCode, logContext);
+}
+
+bool InputHandler::DispatchViaHandler(
+	RE::MenuEventHandler*    handler,
+	std::string_view         handlerName,
+	const RE::BSFixedString& userEvent,
+	std::uint32_t            keyCode,
+	const std::string&       logContext)
+{
 	auto deleter = [](RE::ButtonEvent* e) {
 		e->~ButtonEvent();
 		RE::free(e);
@@ -221,12 +293,12 @@ bool InputHandler::DispatchViaMenuOpenHandler(
 		return false;
 	}
 
-	if (!menuControls->menuOpenHandler->CanProcess(syntheticEvent.get())) {
-		logger::warn("{}: MenuOpenHandler rejected event — action not dispatched", logContext);
+	if (!handler->CanProcess(syntheticEvent.get())) {
+		logger::warn("{}: {} rejected event — action not dispatched", logContext, handlerName);
 		return false;
 	}
 
-	menuControls->menuOpenHandler->ProcessButton(syntheticEvent.get());
+	handler->ProcessButton(syntheticEvent.get());
 	return true;
 }
 
