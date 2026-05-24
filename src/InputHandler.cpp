@@ -59,12 +59,10 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 			// Reset after invoke. No retry: if uiMovie was unavailable, keeping _pendingTab
 			// set would fire again on the next unrelated Journal open, which is confusing.
 			_pendingTab.reset();
-		} else {
+		} else if (_lastKnownTab.has_value()) {
 			// Counter QJO's forced kSystem override on all Journal opens —
 			// restore to the tab the player was last on (skip until first snapshot fires).
-			if (_lastKnownTab.has_value()) {
-				InvokeRestoreTabIfNeeded(*_lastKnownTab);
-			}
+			InvokeRestoreTabIfNeeded(*_lastKnownTab);
 		}
 		return RE::BSEventNotifyControl::kContinue;
 	}
@@ -363,9 +361,6 @@ void InputHandler::SnapshotJournalTab(RE::UI* ui)
 	// Only needed when QJO is installed; on vanilla, sJournalTabIdx is reliable.
 	DetectQJOIfNeeded();
 	if (!_qjoInstalled.value_or(false)) {
-		return;
-	}
-	if (!ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {
 		return;
 	}
 	auto j = ui->GetMenu(RE::JournalMenu::MENU_NAME);
