@@ -378,7 +378,11 @@ void InputHandler::SnapshotJournalTab(RE::UI* ui)
 		tv.GetType() != RE::GFxValue::ValueType::kNumber) {
 		return;
 	}
-	const auto captured = static_cast<JournalTab>(static_cast<std::uint32_t>(tv.GetNumber()));
+	const auto raw = static_cast<std::uint32_t>(tv.GetNumber());
+	if (raw > static_cast<std::uint32_t>(JournalTab::kSystem)) {
+		return;
+	}
+	const auto captured = static_cast<JournalTab>(raw);
 	// Skip kQuest (0): when QJO is installed the SWF sets iCurrentTab=0 just before calling
 	// CloseMenu to open QJO's quests view. Snapshotting 0 would cause the next Journal open
 	// to restore to that navigation-away state. The player's last meaningful tab is whatever
