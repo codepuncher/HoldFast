@@ -369,7 +369,7 @@ void InputHandler::SnapshotJournalTab(RE::UI* ui)
 	if (!j || !j->uiMovie) {
 		return;
 	}
-	DetectQJOIfNeeded();
+	DetectQJOIfNeeded(j->uiMovie.get());
 	if (!_qjoInstalled.value_or(false)) {
 		return;
 	}
@@ -446,11 +446,6 @@ void InputHandler::InvokeRestoreTabIfNeeded(JournalTab tab)
 	// Only needed when QJO is installed — QJO unconditionally forces sJournalTabIdx to
 	// kSystem on every Journal open, making sJournalTabIdx unreliable for tab tracking.
 	// On vanilla, sJournalTabIdx is the authoritative tab selection; no Scaleform call needed.
-	DetectQJOIfNeeded();
-	if (!_qjoInstalled.value_or(false)) {
-		return;
-	}
-
 	const auto tabIdx = static_cast<std::uint32_t>(tab);
 
 	auto* ui = RE::UI::GetSingleton();
@@ -461,6 +456,11 @@ void InputHandler::InvokeRestoreTabIfNeeded(JournalTab tab)
 	auto journal = ui->GetMenu(RE::JournalMenu::MENU_NAME);
 	if (!journal || !journal->uiMovie) {
 		logger::warn("QJO tab restore: uiMovie unavailable");
+		return;
+	}
+
+	DetectQJOIfNeeded(journal->uiMovie.get());
+	if (!_qjoInstalled.value_or(false)) {
 		return;
 	}
 
@@ -482,23 +482,15 @@ void InputHandler::InvokeRestoreTabIfNeeded(JournalTab tab)
 		nullptr, args.data(), static_cast<std::uint32_t>(args.size()));
 }
 
-void InputHandler::DetectQJOIfNeeded()
+void InputHandler::DetectQJOIfNeeded(RE::GFxMovieView* movie)
 {
-	if (_qjoInstalled.has_value()) {
-		return;
-	}
-	auto* ui = RE::UI::GetSingleton();
-	if (!ui) {
-		return;
-	}
-	auto journal = ui->GetMenu(RE::JournalMenu::MENU_NAME);
-	if (!journal || !journal->uiMovie) {
+	if (_qjoInstalled.has_value() || !movie) {
 		return;
 	}
 	// Probe for a QJO-specific function in the Quests page SWF. QJO_EndPage is defined by
 	// QJO and absent in vanilla — GetVariable returns undefined (or fails) without QJO.
 	RE::GFxValue result;
-	const bool   found = journal->uiMovie->GetVariable(
+	const bool   found = movie->GetVariable(
 		&result, "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc.QJO_EndPage");
 	_qjoInstalled = found && result.GetType() != RE::GFxValue::ValueType::kUndefined;
 	logger::info("QJO detection: {}", *_qjoInstalled ? "QJO installed" : "vanilla Journal");

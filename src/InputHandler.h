@@ -92,7 +92,7 @@ private:
 	static void InvokeScaleformTab(JournalTab tab);
 	void        InvokeRestoreTabIfNeeded(JournalTab tab);
 	void        SnapshotJournalTab(RE::UI* ui);
-	void        DetectQJOIfNeeded();
+	void        DetectQJOIfNeeded(RE::GFxMovieView* movie);
 
 	float                    holdDuration{ kDefaultHoldDuration };
 	std::vector<ButtonState> _buttons;
