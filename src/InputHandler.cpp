@@ -378,11 +378,11 @@ void InputHandler::SnapshotJournalTab(RE::UI* ui)
 		tv.GetType() != RE::GFxValue::ValueType::kNumber) {
 		return;
 	}
-	const auto raw = static_cast<std::uint32_t>(tv.GetNumber());
-	if (raw > static_cast<std::uint32_t>(JournalTab::kSystem)) {
+	const auto num = tv.GetNumber();
+	if (!std::isfinite(num) || num < 0.0 || num > static_cast<double>(JournalTab::kSystem)) {
 		return;
 	}
-	const auto captured = static_cast<JournalTab>(raw);
+	const auto captured = static_cast<JournalTab>(static_cast<std::uint32_t>(num));
 	// Skip kQuest (0): when QJO is installed the SWF sets iCurrentTab=0 just before calling
 	// CloseMenu to open QJO's quests view. Snapshotting 0 would cause the next Journal open
 	// to restore to that navigation-away state. The player's last meaningful tab is whatever
@@ -470,7 +470,12 @@ void InputHandler::InvokeRestoreTabIfNeeded(JournalTab tab)
 		logger::warn("QJO tab restore: could not read iCurrentTab");
 		return;
 	}
-	const auto currentIdx = static_cast<std::uint32_t>(current.GetNumber());
+	const auto currentNum = current.GetNumber();
+	if (!std::isfinite(currentNum) || currentNum < 0.0) {
+		logger::warn("QJO tab restore: iCurrentTab value is not a valid number");
+		return;
+	}
+	const auto currentIdx = static_cast<std::uint32_t>(currentNum);
 	if (currentIdx == tabIdx) {
 		return;
 	}
