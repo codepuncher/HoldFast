@@ -227,11 +227,6 @@ Triggered via **workflow_dispatch** with `upload_to_nexus: true` and the `versio
 
 ---
 
-## Known Conflicts
-
-- **[QuestJournalOverhaul](https://www.nexusmods.com/skyrimspecialedition/mods/141295)** — always forces the journal to the System tab, overriding HoldFast's tab selection. Fix planned.
-
----
 
 ## Credits
 

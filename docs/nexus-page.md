@@ -119,11 +119,6 @@ Logs are written to:
 [*]Compatible with any mod that does not also intercept the configured gamepad button.
 [/list]
 
-[b]Known conflicts:[/b]
-[list]
-[*][url=https://www.nexusmods.com/skyrimspecialedition/mods/141295]QuestJournalOverhaul[/url] — always forces the journal to the System tab, overriding HoldFast's tab selection. Fix planned.
-[/list]
-
 [line]
 
 [size=4][b]Credits[/b][/size]
