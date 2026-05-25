@@ -102,8 +102,6 @@ sButtonBackAction=System
 [*][font=Courier New]None[/font] — Button not intercepted
 [/list]
 
-[b]Legacy config:[/b] If neither [font=Courier New]sButtonStartAction[/font] nor [font=Courier New]sButtonBackAction[/font] is present, the old [font=Courier New]sButton=Start[/font] (or [font=Courier New]sButton=Back[/font]) key is used as a fallback — with [font=Courier New]Map[/font] as the action. Existing INI files using [font=Courier New]sButton[/font] continue to work without changes.
-
 Logs are written to:
 [code]
 %USERPROFILE%\Documents\My Games\Skyrim Special Edition\SKSE\HoldFast.log

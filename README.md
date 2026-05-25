@@ -63,8 +63,6 @@ sButtonBackAction=System
 | `CharacterSheet` | Opens Character Menu SE (requires mod) |
 | `None` | Button not intercepted |
 
-**Legacy config:** If neither `sButtonStartAction` nor `sButtonBackAction` is present, the old `sButton=Start` (or `sButton=Back`) key is used as a fallback — with `Map` as the action. Existing INI files using `sButton` continue to work without changes.
-
 Logs are written to:
 ```
 %USERPROFILE%\Documents\My Games\Skyrim Special Edition\SKSE\HoldFast.log
