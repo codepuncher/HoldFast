@@ -188,6 +188,7 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 	case LongPressAction::kMap:
 	case LongPressAction::kMagic:
 	case LongPressAction::kInventory:
+	case LongPressAction::kBestiary:
 		{
 			auto* uiQueue = RE::UIMessageQueue::GetSingleton();
 			if (!uiQueue) {
@@ -201,6 +202,9 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 				break;
 			case LongPressAction::kMagic:
 				menuName = RE::MagicMenu::MENU_NAME;
+				break;
+			case LongPressAction::kBestiary:
+				menuName = "BestiaryMenu";
 				break;
 			default:
 				menuName = RE::InventoryMenu::MENU_NAME;

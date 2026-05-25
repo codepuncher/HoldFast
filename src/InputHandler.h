@@ -40,6 +40,7 @@ public:
 		kFavorites,
 		kTweenMenu,
 		kWait,
+		kBestiary,
 	};
 
 	struct ButtonConfig

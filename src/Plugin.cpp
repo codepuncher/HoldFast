@@ -68,6 +68,7 @@ LongPressAction ReadLongPressAction(std::string_view raw, const char* iniKey)
 		{ "favourites", LongPressAction::kFavorites },
 		{ "tweenmenu", LongPressAction::kTweenMenu },
 		{ "wait", LongPressAction::kWait },
+		{ "bestiary", LongPressAction::kBestiary },
 		{ "none", LongPressAction::kNone },
 	};
 
@@ -79,7 +80,7 @@ LongPressAction ReadLongPressAction(std::string_view raw, const char* iniKey)
 
 	const auto it = kActionMap.find(lower);
 	if (it == kActionMap.end()) {
-		logger::warn("{}='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, None) — disabling button", iniKey, raw);
+		logger::warn("{}='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, Bestiary, None) — disabling button", iniKey, raw);
 		return LongPressAction::kNone;
 	}
 	return it->second;
@@ -191,6 +192,7 @@ void OnInputLoaded()
 			{ LongPressAction::kFavorites, "Favorites" },
 			{ LongPressAction::kTweenMenu, "TweenMenu" },
 			{ LongPressAction::kWait, "Wait" },
+			{ LongPressAction::kBestiary, "Bestiary" },
 		};
 		const auto it = kActionNames.find(btn.action);
 		const auto actionName = it != kActionNames.end() ? it->second : "Unknown";
