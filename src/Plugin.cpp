@@ -105,41 +105,23 @@ std::vector<ButtonConfig> ReadButtons(const CSimpleIniA& a_ini)
 		{ .iniKey = "sButtonBackAction", .keyCode = static_cast<std::uint32_t>(Key::kBack), .name = "Back" },
 	} };
 
-	// Only use legacy mode when the old sButton key is explicitly present.
-	// If all keys are absent (e.g. missing INI), apply the new defaults directly.
-	// Blank or whitespace-only values (e.g. sButtonStartAction=  ) are treated as absent
-	// to avoid silently disabling buttons when the INI has an empty entry.
-	auto hasNonEmptyValue = [&](const char* key) {
-		const char* v = a_ini.GetValue("General", key, nullptr);
-		return v != nullptr && !TrimWhitespace(v).empty();
-	};
-	const bool hasNewStyleKeys =
-		hasNonEmptyValue("sButtonStartAction") || hasNonEmptyValue("sButtonBackAction");
+	std::vector<ButtonConfig> result;
+	bool                      anyKeyPresent = false;
 
-	if (!hasNewStyleKeys && hasNonEmptyValue("sButton")) {
-		const char* legacyRaw = a_ini.GetValue("General", "sButton", nullptr);
-		// Legacy fallback: [General] sButton=Start|Back → Map action.
-		static const std::unordered_map<std::string, ButtonConfig> kLegacyMap{
-			{ "start", { .keyCode = static_cast<std::uint32_t>(Key::kStart), .name = "Start", .action = LongPressAction::kMap } },
-			{ "back", { .keyCode = static_cast<std::uint32_t>(Key::kBack), .name = "Back", .action = LongPressAction::kMap } },
-		};
-
-		std::string lower{ TrimWhitespace(legacyRaw) };
-		std::ranges::transform(lower, lower.begin(), [](unsigned char c) {
-			return static_cast<char>(std::tolower(c));
-		});
-
-		const auto it = kLegacyMap.find(lower);
-		if (it == kLegacyMap.end()) {
-			logger::warn("sButton='{}' is not a recognised button (valid: Start, Back) — using Start", legacyRaw);
-			return { { .keyCode = static_cast<std::uint32_t>(Key::kStart), .name = "Start", .action = LongPressAction::kMap } };
+	for (const auto& def : kButtonDefs) {
+		const char* raw = a_ini.GetValue("General", def.iniKey, nullptr);
+		if (!raw || TrimWhitespace(raw).empty()) {
+			continue;  // absent or blank → treated as absent, no warning
 		}
-		logger::info("Legacy config: {} → Map", it->second.name);
-		return { it->second };
+		anyKeyPresent = true;
+		const auto action = ReadLongPressAction(raw, def.iniKey);
+		if (action == LongPressAction::kNone) {
+			continue;  // kNone entries are excluded
+		}
+		result.push_back({ .keyCode = def.keyCode, .name = def.name, .action = action });
 	}
 
-	if (!hasNewStyleKeys) {
-		// No INI keys at all — apply new defaults.
+	if (!anyKeyPresent) {
 		logger::info("No button action keys found — applying defaults (Start=Map, Back=System)");
 		return {
 			{ .keyCode = static_cast<std::uint32_t>(Key::kStart), .name = "Start", .action = LongPressAction::kMap },
@@ -147,18 +129,6 @@ std::vector<ButtonConfig> ReadButtons(const CSimpleIniA& a_ini)
 		};
 	}
 
-	std::vector<ButtonConfig> result;
-	for (const auto& def : kButtonDefs) {
-		const char* raw = a_ini.GetValue("General", def.iniKey, nullptr);
-		if (!raw || TrimWhitespace(raw).empty()) {
-			continue;  // absent or blank key → kNone, no warning
-		}
-		const auto action = ReadLongPressAction(raw, def.iniKey);
-		if (action == LongPressAction::kNone) {
-			continue;  // kNone entries are excluded
-		}
-		result.push_back({ .keyCode = def.keyCode, .name = def.name, .action = action });
-	}
 	return result;
 }
 
