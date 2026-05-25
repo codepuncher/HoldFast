@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 project(
     HoldFast
-    VERSION 0.2.0
+    VERSION 1.0.0
     DESCRIPTION "Configurable hold actions for gamepad buttons; short press still works normally"
     LANGUAGES CXX)
 
