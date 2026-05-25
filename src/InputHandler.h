@@ -41,6 +41,7 @@ public:
 		kTweenMenu,
 		kWait,
 		kBestiary,
+		kCharacterSheet,
 	};
 
 	struct ButtonConfig
