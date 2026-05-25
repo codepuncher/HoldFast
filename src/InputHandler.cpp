@@ -9,6 +9,7 @@ namespace
 	constexpr auto kGfxSwitchPageToFront = "_root.QuestJournalFader.Menu_mc.SwitchPageToFront";
 	constexpr auto kGfxQJOEndPage = "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc.QJO_EndPage";
 	constexpr auto kBestiaryMenuName = "BestiaryMenu";
+	constexpr auto kCharacterSheetMenuName = "CharacterSheet";
 }
 
 InputHandler* InputHandler::GetSingleton()
@@ -108,7 +109,10 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 
 	// If any pausing menu is open, pass all input through and clear any captured press so it
 	// can't fire a spurious dispatch once the menu closes.
-	if (ui && ui->GameIsPaused()) {
+	// Also pass through for kCharacterSheet: it uses kModal but not kPausesGame, so
+	// GameIsPaused() stays false while it is open. Without this guard, HoldFast would keep
+	// consuming Start/Back and could attempt to dispatch another action on top of it.
+	if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(kCharacterSheetMenuName))) {
 		if (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {
 			SnapshotJournalTab(ui);
 		}
@@ -190,6 +194,7 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 	case LongPressAction::kMagic:
 	case LongPressAction::kInventory:
 	case LongPressAction::kBestiary:
+	case LongPressAction::kCharacterSheet:
 		{
 			auto* uiQueue = RE::UIMessageQueue::GetSingleton();
 			if (!uiQueue) {
@@ -206,6 +211,9 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 				break;
 			case LongPressAction::kBestiary:
 				menuName = kBestiaryMenuName;
+				break;
+			case LongPressAction::kCharacterSheet:
+				menuName = kCharacterSheetMenuName;
 				break;
 			default:
 				menuName = RE::InventoryMenu::MENU_NAME;
