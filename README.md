@@ -212,18 +212,25 @@ git commit -m "chore: update CommonLibSSE-NG submodule"
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `ci.yml` | PRs to `main` touching source/cmake/vcpkg | clang-format (ubuntu) → clang-tidy + build (windows, parallel) |
-| `release.yml` | Push of a `v*` tag or manual `workflow_dispatch` | Builds release DLL, publishes GitHub Release; opt-in Nexus Mods upload via dispatch input |
+| `release.yml` | Push of a `v*` tag | Builds release DLL and publishes GitHub Release |
+| `nexus-upload.yml` | Release publish or manual `workflow_dispatch` | Uploads the packaged ZIP to Nexus Mods |
 | `lint.yml` | PRs touching `scripts/` | shellcheck on shell scripts |
 | `pr-title.yml` | PR opened/edited/synchronised | Validates PR title follows Conventional Commits |
 
 #### Nexus Mods Upload
 
-Triggered via **workflow_dispatch** with `upload_to_nexus: true` and the `version` input set (e.g. `1.0.0`). One-time setup:
+Triggered on release publish, or manually via **workflow_dispatch** with the `version` input set (e.g. `1.0.0`). One-time setup:
 
 1. Upload your first file manually via the [Nexus Mods web UI](https://www.nexusmods.com) to create the file group.
 2. Add to your repository:
    - **Secret** `NEXUSMODS_API_KEY` — your Nexus Mods API key
    - **Variable** `NEXUSMODS_FILE_GROUP_ID` — the file group ID
+
+Upload behavior is configured as:
+- `archive_existing_file: true`
+- `primary_mod_manager_download: true`
+- `allow_mod_manager_download: true`
+- `show_requirements_pop_up: true`
 
 ---
 
