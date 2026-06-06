@@ -212,7 +212,8 @@ git commit -m "chore: update CommonLibSSE-NG submodule"
 | Workflow | Trigger | What it does |
 |---|---|---|
 | `ci.yml` | PRs to `main` touching source/cmake/vcpkg | clang-format (ubuntu) → clang-tidy + build (windows, parallel) |
-| `release.yml` | Push of a `v*` tag or manual `workflow_dispatch` | Builds release DLL, publishes GitHub Release; opt-in Nexus Mods upload via dispatch input |
+| `release.yml` | Push of a `v*` tag | Builds release DLL and publishes GitHub Release |
+| `nexus-upload.yml` | Release publish or manual `workflow_dispatch` | Uploads the packaged ZIP to Nexus Mods |
 | `lint.yml` | PRs touching `scripts/` | shellcheck on shell scripts |
 | `pr-title.yml` | PR opened/edited/synchronised | Validates PR title follows Conventional Commits |
 
