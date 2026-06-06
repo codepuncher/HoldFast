@@ -10,6 +10,24 @@ namespace
 	constexpr auto kGfxQJOEndPage = "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc.QJO_EndPage";
 	constexpr auto kBestiaryMenuName = "BestiaryMenu";
 	constexpr auto kCharacterSheetMenuName = "CharacterSheet";
+
+	std::optional<std::string_view> GetDirectOpenMenuName(InputHandler::LongPressAction action)
+	{
+		switch (action) {
+		case InputHandler::LongPressAction::kMap:
+			return RE::MapMenu::MENU_NAME;
+		case InputHandler::LongPressAction::kMagic:
+			return RE::MagicMenu::MENU_NAME;
+		case InputHandler::LongPressAction::kInventory:
+			return RE::InventoryMenu::MENU_NAME;
+		case InputHandler::LongPressAction::kBestiary:
+			return kBestiaryMenuName;
+		case InputHandler::LongPressAction::kCharacterSheet:
+			return kCharacterSheetMenuName;
+		default:
+			return std::nullopt;
+		}
+	}
 }
 
 InputHandler* InputHandler::GetSingleton()
@@ -186,45 +204,26 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 {
 	const std::string logCtx = state.name + " long press";
 
-	// UIMessageQueue direct-open actions — no gamepad UserEvent path exists for these.
-	// InventoryMenu (context=kNone) and MagicMenu (context=kItemMenu) are not handled by
-	// menuOpenHandler in the Gameplay context; direct AddMessage is the only viable path.
-	switch (state.action) {
-	case LongPressAction::kMap:
-	case LongPressAction::kMagic:
-	case LongPressAction::kInventory:
-	case LongPressAction::kBestiary:
-	case LongPressAction::kCharacterSheet:
-		{
-			auto* uiQueue = RE::UIMessageQueue::GetSingleton();
-			if (!uiQueue) {
-				logger::error("{}: UIMessageQueue unavailable — action not dispatched", logCtx);
-				return;
-			}
-			std::string_view menuName;
-			switch (state.action) {
-			case LongPressAction::kMap:
-				menuName = RE::MapMenu::MENU_NAME;
-				break;
-			case LongPressAction::kMagic:
-				menuName = RE::MagicMenu::MENU_NAME;
-				break;
-			case LongPressAction::kBestiary:
-				menuName = kBestiaryMenuName;
-				break;
-			case LongPressAction::kCharacterSheet:
-				menuName = kCharacterSheetMenuName;
-				break;
-			default:
-				menuName = RE::InventoryMenu::MENU_NAME;
-				break;
-			}
-			logger::info("{}: opening {}", logCtx, menuName);
-			uiQueue->AddMessage(menuName, RE::UI_MESSAGE_TYPE::kShow, nullptr);
+	if (state.action == LongPressAction::kNewSave) {
+		logger::info("{}: dispatching NewSave", logCtx);
+		if (auto* saveLoadManager = RE::BGSSaveLoadManager::GetSingleton()) {
+			RE::SendHUDMessage::ShowHUDMessage("Saving...");
+			saveLoadManager->Save(nullptr);
 			return;
 		}
-	default:
-		break;
+		logger::error("{}: BGSSaveLoadManager unavailable — action not dispatched", logCtx);
+		return;
+	}
+
+	if (const auto menuName = GetDirectOpenMenuName(state.action)) {
+		auto* uiQueue = RE::UIMessageQueue::GetSingleton();
+		if (!uiQueue) {
+			logger::error("{}: UIMessageQueue unavailable — action not dispatched", logCtx);
+			return;
+		}
+		logger::info("{}: opening {}", logCtx, *menuName);
+		uiQueue->AddMessage(*menuName, RE::UI_MESSAGE_TYPE::kShow, nullptr);
+		return;
 	}
 
 	auto* userEvents = RE::UserEvents::GetSingleton();
@@ -238,32 +237,28 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 		logger::info("{}: opening Tween Menu", logCtx);
 		DispatchViaMenuOpenHandler(userEvents->tweenMenu, state.keyCode, logCtx);
 		return;
-
 	case LongPressAction::kWait:
 		logger::info("{}: opening Sleep/Wait", logCtx);
 		DispatchViaMenuOpenHandler(userEvents->wait, state.keyCode, logCtx);
 		return;
-
+	case LongPressAction::kQuickSave:
+		logger::info("{}: dispatching QuickSave", logCtx);
+		DispatchViaQuickSaveLoadHandler(userEvents->quicksave, state.keyCode, logCtx);
+		return;
 	case LongPressAction::kFavorites:
 		logger::info("{}: opening Favorites", logCtx);
 		DispatchViaFavoritesHandler(userEvents->favorites, state.keyCode, logCtx);
 		return;
-
 	case LongPressAction::kQuests:
 	case LongPressAction::kSystem:
 	case LongPressAction::kStats:
 		{
 			logger::info("{}: opening Journal", logCtx);
 			JournalTab targetTab = JournalTab::kQuest;
-			switch (state.action) {
-			case LongPressAction::kSystem:
+			if (state.action == LongPressAction::kSystem) {
 				targetTab = JournalTab::kSystem;
-				break;
-			case LongPressAction::kStats:
+			} else if (state.action == LongPressAction::kStats) {
 				targetTab = JournalTab::kStats;
-				break;
-			default:
-				break;  // kQuests: kQuest(0)
 			}
 			OpenJournalOnTab(targetTab, state.name);
 			if (!DispatchViaMenuOpenHandler(userEvents->journal, state.keyCode, logCtx)) {
@@ -277,7 +272,6 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 			}
 			return;
 		}
-
 	default:
 		return;
 	}
@@ -298,6 +292,23 @@ bool InputHandler::DispatchViaMenuOpenHandler(
 		return false;
 	}
 	return DispatchViaHandler(menuControls->menuOpenHandler, "menuOpenHandler", userEvent, keyCode, logContext);
+}
+
+bool InputHandler::DispatchViaQuickSaveLoadHandler(
+	const RE::BSFixedString& userEvent,
+	std::uint32_t            keyCode,
+	const std::string&       logContext)
+{
+	auto* menuControls = RE::MenuControls::GetSingleton();
+	if (!menuControls) {
+		logger::error("{}: MenuControls unavailable — action not dispatched", logContext);
+		return false;
+	}
+	if (!menuControls->quickSaveLoadHandler) {
+		logger::error("{}: quickSaveLoadHandler unavailable — action not dispatched", logContext);
+		return false;
+	}
+	return DispatchViaHandler(menuControls->quickSaveLoadHandler, "quickSaveLoadHandler", userEvent, keyCode, logContext);
 }
 
 bool InputHandler::DispatchViaFavoritesHandler(

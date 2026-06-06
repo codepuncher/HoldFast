@@ -68,6 +68,8 @@ LongPressAction ReadLongPressAction(std::string_view raw, const char* iniKey)
 		{ "favourites", LongPressAction::kFavorites },
 		{ "tweenmenu", LongPressAction::kTweenMenu },
 		{ "wait", LongPressAction::kWait },
+		{ "newsave", LongPressAction::kNewSave },
+		{ "quicksave", LongPressAction::kQuickSave },
 		{ "bestiary", LongPressAction::kBestiary },
 		{ "charactersheet", LongPressAction::kCharacterSheet },
 		{ "none", LongPressAction::kNone },
@@ -81,7 +83,7 @@ LongPressAction ReadLongPressAction(std::string_view raw, const char* iniKey)
 
 	const auto it = kActionMap.find(lower);
 	if (it == kActionMap.end()) {
-		logger::warn("{}='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, Bestiary, CharacterSheet, None) — disabling button", iniKey, raw);
+		logger::warn("{}='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", iniKey, raw);
 		return LongPressAction::kNone;
 	}
 	return it->second;
@@ -163,6 +165,8 @@ void OnInputLoaded()
 			{ LongPressAction::kFavorites, "Favorites" },
 			{ LongPressAction::kTweenMenu, "TweenMenu" },
 			{ LongPressAction::kWait, "Wait" },
+			{ LongPressAction::kNewSave, "NewSave" },
+			{ LongPressAction::kQuickSave, "QuickSave" },
 			{ LongPressAction::kBestiary, "Bestiary" },
 			{ LongPressAction::kCharacterSheet, "CharacterSheet" },
 		};
