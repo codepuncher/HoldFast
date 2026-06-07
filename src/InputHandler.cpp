@@ -128,7 +128,7 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 
 	// If SKSE Menu Framework owns input focus, pass input through and clear held-state
 	// captures so Start/Back interception cannot fight the settings UI.
-	if (HoldFastMenuUI::IsBlockingInput()) {
+	if (!_buttons.empty() && HoldFastMenuUI::IsBlockingInput()) {
 		for (auto& bs : _buttons) {
 			bs.pressTime.reset();
 			bs.triggered = false;
