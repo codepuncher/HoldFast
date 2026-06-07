@@ -83,8 +83,12 @@ else()
         AUTHOR
         "codepuncher"
         SOURCES
+        src/Config.h
+        src/Config.cpp
         src/InputHandler.h
         src/InputHandler.cpp
+        src/MenuUI.h
+        src/MenuUI.cpp
         src/Plugin.cpp
         "${CMAKE_CURRENT_BINARY_DIR}/src/version.rc"
         USE_ADDRESS_LIBRARY)
@@ -102,8 +106,10 @@ else()
 
     target_precompile_headers(${PROJECT_NAME} PRIVATE src/PCH.h)
 
-    target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src"
-                                                       "${CMAKE_CURRENT_BINARY_DIR}/src")
+    target_include_directories(
+        ${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_BINARY_DIR}/src"
+                                "${CMAKE_CURRENT_SOURCE_DIR}/lib/skse-mcp/include")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
 
     set_target_properties(
         ${PROJECT_NAME}

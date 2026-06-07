@@ -17,6 +17,7 @@ Inspired by Red Dead Redemption 2's hold-Start-to-open-map mechanic.
 - [Skyrim Special Edition](https://store.steampowered.com/app/489830) or Anniversary Edition
 - [SKSE64](https://skse.silverlock.org/)
 - [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
+- Optional: [SKSE Menu Framework](https://www.nexusmods.com/skyrimspecialedition/mods/120352) for in-game settings UI
 
 ## Installation
 
@@ -47,6 +48,11 @@ sButtonStartAction=Map
 ; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
 sButtonBackAction=System
 ```
+
+**In-game settings (optional):**
+
+If SKSE Menu Framework v3 is installed, HoldFast adds a `HoldFast/Settings` page in its mod control panel.
+Use **Save to config** to persist and apply changes, **Reload from config** to discard staged edits and reload INI values, and **Reset to defaults** to stage defaults (`0.5`, `Start=Map`, `Back=System`) until saved.
 
 **Valid actions:**
 

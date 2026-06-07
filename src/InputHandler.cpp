@@ -1,6 +1,7 @@
 #include "PCH.h"
 
 #include "InputHandler.h"
+#include "MenuUI.h"
 
 namespace
 {
@@ -114,6 +115,16 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 	}
 
 	auto* ui = RE::UI::GetSingleton();
+
+	// If SKSE Menu Framework owns input focus, pass input through and clear held-state
+	// captures so Start/Back interception cannot fight the settings UI.
+	if (HoldFastMenuUI::IsBlockingInput()) {
+		for (auto& bs : _buttons) {
+			bs.pressTime.reset();
+			bs.triggered = false;
+		}
+		return RE::BSEventNotifyControl::kContinue;
+	}
 
 	// Fail-safe: if a tab restore is pending but the Journal is not open (or UI singleton
 	// is unavailable), the Journal failed to open or the close event was not delivered —

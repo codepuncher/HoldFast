@@ -47,6 +47,7 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 [*][url=https://store.steampowered.com/app/489830]Skyrim Special Edition[/url] or Anniversary Edition
 [*][url=https://skse.silverlock.org/]SKSE64[/url]
 [*][url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
+[*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/120352]SKSE Menu Framework[/url] for in-game settings UI
 [/list]
 
 [line]
@@ -84,6 +85,10 @@ sButtonStartAction=Map
 ; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
 sButtonBackAction=System
 [/code]
+
+[b]In-game settings (optional):[/b]
+If SKSE Menu Framework v3 is installed, HoldFast adds a [font=Courier New]HoldFast/Settings[/font] page in its mod control panel.
+Use [b]Save to config[/b] to persist and apply changes, [b]Reload from config[/b] to discard staged edits and reload INI values, and [b]Reset to defaults[/b] to stage defaults ([font=Courier New]0.5[/font], [font=Courier New]Start=Map[/font], [font=Courier New]Back=System[/font]) until saved.
 
 [b]Valid actions:[/b]
 
