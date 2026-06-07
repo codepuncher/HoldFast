@@ -19,7 +19,9 @@ if(PLUGIN_TESTS_ONLY)
     include(CTest)
     include(Catch)
 
-    add_executable(${PROJECT_NAME}Tests test/PluginTests.cpp)
+    add_executable(${PROJECT_NAME}Tests test/PluginTests.cpp src/ConfigParsing.cpp)
+
+    target_compile_definitions(${PROJECT_NAME}Tests PRIVATE PLUGIN_TESTS_ONLY)
 
     target_include_directories(${PROJECT_NAME}Tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
@@ -85,6 +87,7 @@ else()
         SOURCES
         src/Config.h
         src/Config.cpp
+        src/ConfigParsing.cpp
         src/InputHandler.h
         src/InputHandler.cpp
         src/MenuUI.h
