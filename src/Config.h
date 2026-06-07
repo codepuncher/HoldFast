@@ -19,8 +19,8 @@ namespace HoldFast::Config
 
 	struct ActionOption
 	{
-		std::string_view name;
-		LongPressAction  action;
+		const char*     name;
+		LongPressAction action;
 	};
 
 	inline constexpr std::array<ActionOption, 14> kActionOptions{ {
@@ -46,6 +46,6 @@ namespace HoldFast::Config
 	[[nodiscard]] std::vector<ButtonConfig> BuildButtons(const Settings& settings);
 	void                                    ApplySettings(InputHandler& handler, const Settings& settings);
 
-	[[nodiscard]] LongPressAction  ParseAction(std::string_view raw);
-	[[nodiscard]] std::string_view ActionName(LongPressAction action);
+	[[nodiscard]] LongPressAction ParseAction(std::string_view raw);
+	[[nodiscard]] const char*     ActionName(LongPressAction action);
 }

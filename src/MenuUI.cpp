@@ -71,17 +71,15 @@ namespace
 
 	bool DrawActionCombo(const char* label, InputHandler::LongPressAction& value)
 	{
-		const auto        preview = HoldFast::Config::ActionName(value);
-		const std::string previewText{ preview };
-		if (!ImGuiMCP::BeginCombo(label, previewText.c_str())) {
+		const char* preview = HoldFast::Config::ActionName(value);
+		if (!ImGuiMCP::BeginCombo(label, preview)) {
 			return false;
 		}
 
 		bool changed = false;
 		for (const auto& option : HoldFast::Config::kActionOptions) {
-			const bool        isSelected = (option.action == value);
-			const std::string optionName{ option.name };
-			if (ImGuiMCP::Selectable(optionName.c_str(), isSelected)) {
+			const bool isSelected = (option.action == value);
+			if (ImGuiMCP::Selectable(option.name, isSelected)) {
 				value = option.action;
 				changed = true;
 			}
@@ -100,6 +98,7 @@ namespace
 		state.stagedSettings.holdDuration = HoldFast::ClampHoldDuration(
 			state.stagedSettings.holdDuration,
 			InputHandler::kDefaultHoldDuration,
+			InputHandler::kMinHoldDuration,
 			InputHandler::kMaxHoldDuration);
 
 		const auto* plugin = SKSE::PluginDeclaration::GetSingleton();
@@ -138,7 +137,7 @@ namespace
 	{
 		auto& state = GetMenuState();
 		bool  changed = false;
-		changed |= ImGuiMCP::SliderFloat("Hold duration", &state.stagedSettings.holdDuration, 0.1F, InputHandler::kMaxHoldDuration, "%.2fs");
+		changed |= ImGuiMCP::SliderFloat("Hold duration", &state.stagedSettings.holdDuration, InputHandler::kMinHoldDuration, InputHandler::kMaxHoldDuration, "%.2fs");
 		changed |= DrawActionCombo("Start long-press action", state.stagedSettings.startAction);
 		changed |= DrawActionCombo("Back long-press action", state.stagedSettings.backAction);
 

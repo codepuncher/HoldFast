@@ -13,7 +13,7 @@ namespace
 	[[nodiscard]] float ReadHoldDuration(const CSimpleIniA& ini)
 	{
 		const auto raw = static_cast<float>(ini.GetDoubleValue("General", "fHoldDuration", HoldFast::kDefaultHoldDuration));
-		const auto duration = HoldFast::ClampHoldDuration(raw, HoldFast::kDefaultHoldDuration, HoldFast::kMaxHoldDuration);
+		const auto duration = HoldFast::ClampHoldDuration(raw, HoldFast::kDefaultHoldDuration, HoldFast::kMinHoldDuration, HoldFast::kMaxHoldDuration);
 		if (duration == raw) {
 			return duration;
 		}

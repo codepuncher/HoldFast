@@ -5,6 +5,7 @@
 
 namespace HoldFast
 {
+	inline constexpr float kMinHoldDuration = 0.1F;
 	inline constexpr float kDefaultHoldDuration = 0.5F;
 	inline constexpr float kMaxHoldDuration = 5.0F;
 }

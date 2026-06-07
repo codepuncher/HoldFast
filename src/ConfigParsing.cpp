@@ -34,7 +34,7 @@ LongPressAction HoldFast::Config::ParseAction(std::string_view raw)
 	return it != kActionMap.end() ? it->second : LongPressAction::kNone;
 }
 
-std::string_view HoldFast::Config::ActionName(LongPressAction action)
+const char* HoldFast::Config::ActionName(LongPressAction action)
 {
 	for (const auto& option : kActionOptions) {
 		if (option.action == action) {
