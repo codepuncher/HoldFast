@@ -1,5 +1,7 @@
 #include "PCH.h"
 
+#include <cctype>
+
 #include "Config.h"
 #include "InputHandler.h"
 #include "Utils.h"

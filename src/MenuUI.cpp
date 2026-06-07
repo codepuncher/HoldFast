@@ -14,6 +14,10 @@ namespace
 		return installed;
 	}
 
+	// menuFramework (HMODULE) is declared as a file-scope static in
+	// SKSEMenuFramework.hpp (pulled in via SKSEMCP/utils.hpp). Do not
+	// redeclare it here — that would shadow the variable used by every
+	// GetProcAddress call inside that header.
 	bool EnsureFrameworkLoaded()
 	{
 		if (menuFramework) {
