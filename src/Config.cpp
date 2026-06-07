@@ -65,12 +65,14 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 bool HoldFast::Config::SaveSettings(const Settings& settings)
 {
 	CSimpleIniA ini;
+	ini.SetSpaces(false);
 	ini.LoadFile(kIniPath);
 
 	const auto startActionName = std::string{ ActionName(settings.startAction) };
 	const auto backActionName = std::string{ ActionName(settings.backAction) };
 
-	ini.SetDoubleValue("General", "fHoldDuration", static_cast<double>(settings.holdDuration));
+	const auto holdDurationStr = fmt::format("{:g}", settings.holdDuration);
+	ini.SetValue("General", "fHoldDuration", holdDurationStr.c_str());
 	ini.SetValue("General", "sButtonStartAction", startActionName.c_str());
 	ini.SetValue("General", "sButtonBackAction", backActionName.c_str());
 
