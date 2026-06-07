@@ -78,10 +78,10 @@ Edit [font=Courier New]Data\SKSE\Plugins\HoldFast.ini[/font]:
 ; Duration in seconds a button must be held to trigger its long-press action (default: 0.5, max: 5.0)
 fHoldDuration=0.5
 ; Long-press action for the Start (Menu) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, Bestiary, CharacterSheet, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
 sButtonStartAction=Map
 ; Long-press action for the Back (View) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, Bestiary, CharacterSheet, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
 sButtonBackAction=System
 [/code]
 
@@ -97,6 +97,8 @@ sButtonBackAction=System
 [*][font=Courier New]Favorites[/font] — Opens the favourites menu
 [*][font=Courier New]TweenMenu[/font] — Opens the tween menu (Items/Magic/Map/Skills)
 [*][font=Courier New]Wait[/font] — Opens the sleep/wait menu
+[*][font=Courier New]NewSave[/font] — Performs a new save
+[*][font=Courier New]QuickSave[/font] — Performs a quicksave
 [*][font=Courier New]Bestiary[/font] — Opens The Dragonborn's Bestiary (requires mod)
 [*][font=Courier New]CharacterSheet[/font] — Opens Character Menu SE (requires mod)
 [*][font=Courier New]None[/font] — Button not intercepted
