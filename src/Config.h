@@ -44,6 +44,6 @@ namespace HoldFast::Config
 	[[nodiscard]] std::vector<InputHandler::ButtonConfig> BuildButtons(const Settings& settings);
 	void                                                  ApplySettings(InputHandler& handler, const Settings& settings);
 
-	[[nodiscard]] InputHandler::LongPressAction ParseAction(std::string_view raw, const char* sourceKey, bool logWarnings);
+	[[nodiscard]] InputHandler::LongPressAction ParseAction(std::string_view raw);
 	[[nodiscard]] std::string_view              ActionName(InputHandler::LongPressAction action);
 }

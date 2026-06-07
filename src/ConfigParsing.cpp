@@ -1,10 +1,3 @@
-#ifndef PLUGIN_TESTS_ONLY
-#	include "PCH.h"
-#else
-#	include <algorithm>
-#	include <string>
-#endif
-
 #include <cctype>
 #include <unordered_map>
 
@@ -16,7 +9,7 @@ namespace
 	using LongPressAction = InputHandler::LongPressAction;
 }
 
-InputHandler::LongPressAction HoldFast::Config::ParseAction(std::string_view raw, const char* sourceKey, bool logWarnings)
+InputHandler::LongPressAction HoldFast::Config::ParseAction(std::string_view raw)
 {
 	static const std::unordered_map<std::string, LongPressAction> kActionMap{
 		{ "map", LongPressAction::kMap },
@@ -38,24 +31,12 @@ InputHandler::LongPressAction HoldFast::Config::ParseAction(std::string_view raw
 
 	const auto  trimmed = HoldFast::TrimWhitespace(raw);
 	std::string lower{ trimmed };
-	std::ranges::transform(lower, lower.begin(), [](unsigned char c) {
-		return static_cast<char>(std::tolower(c));
-	});
+	for (auto& c : lower) {
+		c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+	}
 
 	const auto it = kActionMap.find(lower);
-	if (it != kActionMap.end()) {
-		return it->second;
-	}
-#ifndef PLUGIN_TESTS_ONLY
-	if (logWarnings) {
-		logger::warn("{}='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button",
-			sourceKey, raw);
-	}
-#else
-	(void)logWarnings;
-	(void)sourceKey;
-#endif
-	return LongPressAction::kNone;
+	return it != kActionMap.end() ? it->second : LongPressAction::kNone;
 }
 
 std::string_view HoldFast::Config::ActionName(LongPressAction action)

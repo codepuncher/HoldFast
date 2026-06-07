@@ -51,8 +51,14 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 		return settings;
 	}
 
-	settings.startAction = hasStart ? ParseAction(rawStart, "sButtonStartAction", true) : LongPressAction::kNone;
-	settings.backAction = hasBack ? ParseAction(rawBack, "sButtonBackAction", true) : LongPressAction::kNone;
+	settings.startAction = hasStart ? ParseAction(rawStart) : LongPressAction::kNone;
+	if (hasStart && settings.startAction == LongPressAction::kNone && HoldFast::TrimWhitespace(rawStart) != "none") {
+		logger::warn("sButtonStartAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawStart);
+	}
+	settings.backAction = hasBack ? ParseAction(rawBack) : LongPressAction::kNone;
+	if (hasBack && settings.backAction == LongPressAction::kNone && HoldFast::TrimWhitespace(rawBack) != "none") {
+		logger::warn("sButtonBackAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawBack);
+	}
 	return settings;
 }
 

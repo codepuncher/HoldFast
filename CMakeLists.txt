@@ -21,8 +21,6 @@ if(PLUGIN_TESTS_ONLY)
 
     add_executable(${PROJECT_NAME}Tests test/PluginTests.cpp src/ConfigParsing.cpp)
 
-    target_compile_definitions(${PROJECT_NAME}Tests PRIVATE PLUGIN_TESTS_ONLY)
-
     target_include_directories(${PROJECT_NAME}Tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
     target_link_libraries(${PROJECT_NAME}Tests PRIVATE Catch2::Catch2WithMain)
