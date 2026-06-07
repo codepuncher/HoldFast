@@ -9,6 +9,12 @@
 
 namespace
 {
+	bool IsFrameworkInstalled()
+	{
+		static const bool installed = SKSEMenuFramework::IsInstalled();
+		return installed;
+	}
+
 	bool EnsureFrameworkLoaded()
 	{
 		if (menuFramework) {
@@ -20,6 +26,25 @@ namespace
 		}
 		menuFramework = LoadLibraryW(L"Data/SKSE/Plugins/SKSEMenuFramework.dll");
 		return menuFramework != nullptr;
+	}
+
+	bool HasBlockingWindowExport()
+	{
+		static bool exportResolved = false;
+		static bool hasExport = false;
+
+		if (exportResolved) {
+			return hasExport;
+		}
+
+		// If the framework DLL isn't loaded yet, keep retrying on future calls.
+		if (!EnsureFrameworkLoaded()) {
+			return false;
+		}
+
+		hasExport = GetProcAddress(menuFramework, "IsAnyBlockingWindowOpened") != nullptr;
+		exportResolved = true;
+		return hasExport;
 	}
 
 	struct MenuState
@@ -87,12 +112,14 @@ namespace
 		state.hasPendingChanges = false;
 	}
 
-	void ReloadFromConfig()
+	void ReloadFromConfig(bool applyRuntime)
 	{
 		auto& state = GetMenuState();
 		state.stagedSettings = HoldFast::Config::LoadSettings();
 		state.hasPendingChanges = false;
-		HoldFast::Config::ApplySettings(*InputHandler::GetSingleton(), state.stagedSettings);
+		if (applyRuntime) {
+			HoldFast::Config::ApplySettings(*InputHandler::GetSingleton(), state.stagedSettings);
+		}
 	}
 
 	void ResetToDefaults()
@@ -121,7 +148,7 @@ namespace
 		}
 		ImGuiMCP::SameLine();
 		if (ImGuiMCP::Button("Reload from config")) {
-			ReloadFromConfig();
+			ReloadFromConfig(true);
 		}
 		ImGuiMCP::SameLine();
 		if (ImGuiMCP::Button("Reset to defaults")) {
@@ -133,7 +160,7 @@ namespace
 
 void HoldFastMenuUI::Register()
 {
-	if (!SKSEMenuFramework::IsInstalled()) {
+	if (!IsFrameworkInstalled()) {
 		logger::info("SKSE Menu Framework not installed — in-game settings menu disabled (INI config still available)");
 		return;
 	}
@@ -147,7 +174,7 @@ void HoldFastMenuUI::Register()
 		return;
 	}
 
-	ReloadFromConfig();
+	ReloadFromConfig(false);
 	SKSEMenuFramework::SetSection("HoldFast");
 	SKSEMenuFramework::AddSectionItem("Settings", RenderSettings);
 	logger::info("SKSE Menu Framework integration registered");
@@ -155,13 +182,10 @@ void HoldFastMenuUI::Register()
 
 bool HoldFastMenuUI::IsBlockingInput()
 {
-	if (!SKSEMenuFramework::IsInstalled()) {
+	if (!IsFrameworkInstalled()) {
 		return false;
 	}
-	if (!EnsureFrameworkLoaded()) {
-		return false;
-	}
-	if (!GetProcAddress(menuFramework, "IsAnyBlockingWindowOpened")) {
+	if (!HasBlockingWindowExport()) {
 		return false;
 	}
 	return SKSEMenuFramework::IsAnyBlockingWindowOpened();

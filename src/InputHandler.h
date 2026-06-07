@@ -85,6 +85,7 @@ private:
 		bool                                                 triggered{ false };
 	};
 
+	bool        ScanInputEvents(RE::InputEvent* const* a_events);
 	bool        ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
 	static bool DispatchViaMenuOpenHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
 	static bool DispatchViaQuickSaveLoadHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);

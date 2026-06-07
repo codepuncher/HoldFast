@@ -1,10 +1,13 @@
 #include <catch2/catch_test_macros.hpp>
 #include <limits>
 
+#include "Config.h"
 #include "Utils.h"
 
 using HoldFast::ClampHoldDuration;
 using HoldFast::TrimWhitespace;
+using HoldFast::Config::ActionName;
+using HoldFast::Config::ParseAction;
 
 TEST_CASE("TrimWhitespace removes leading and trailing whitespace", "[utils]")
 {
@@ -39,4 +42,35 @@ TEST_CASE("ClampHoldDuration clamps and validates values", "[utils]")
 	CHECK(ClampHoldDuration(std::numeric_limits<float>::quiet_NaN(), kDefault, kMax) == kDefault);
 	CHECK(ClampHoldDuration(std::numeric_limits<float>::infinity(), kDefault, kMax) == kDefault);
 	CHECK(ClampHoldDuration(-std::numeric_limits<float>::infinity(), kDefault, kMax) == kDefault);
+}
+
+TEST_CASE("ParseAction accepts case-insensitive and trimmed values", "[config]")
+{
+	using Action = InputHandler::LongPressAction;
+
+	CHECK(ParseAction("Map", "sButtonStartAction", false) == Action::kMap);
+	CHECK(ParseAction("  map  ", "sButtonStartAction", false) == Action::kMap);
+	CHECK(ParseAction("SyStEm", "sButtonStartAction", false) == Action::kSystem);
+	CHECK(ParseAction("\tQuickSave\r\n", "sButtonStartAction", false) == Action::kQuickSave);
+}
+
+TEST_CASE("ParseAction supports favourites alias and invalid fallback", "[config]")
+{
+	using Action = InputHandler::LongPressAction;
+
+	CHECK(ParseAction("Favorites", "sButtonBackAction", false) == Action::kFavorites);
+	CHECK(ParseAction("Favourites", "sButtonBackAction", false) == Action::kFavorites);
+	CHECK(ParseAction("not-an-action", "sButtonBackAction", false) == Action::kNone);
+	CHECK(ParseAction("", "sButtonBackAction", false) == Action::kNone);
+	CHECK(ParseAction("   ", "sButtonBackAction", false) == Action::kNone);
+}
+
+TEST_CASE("ActionName maps enum values and falls back to None", "[config]")
+{
+	using Action = InputHandler::LongPressAction;
+
+	CHECK(ActionName(Action::kMap) == "Map");
+	CHECK(ActionName(Action::kQuickSave) == "QuickSave");
+	CHECK(ActionName(Action::kCharacterSheet) == "CharacterSheet");
+	CHECK(ActionName(static_cast<Action>(9999)) == "None");
 }
