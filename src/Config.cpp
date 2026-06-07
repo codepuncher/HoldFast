@@ -1,30 +1,29 @@
 #include "PCH.h"
 
 #include "Config.h"
+#include "InputHandler.h"
 #include "Utils.h"
 
 namespace
 {
 	constexpr auto kIniPath = R"(Data\SKSE\Plugins\HoldFast.ini)";
 
-	using LongPressAction = InputHandler::LongPressAction;
-
 	[[nodiscard]] float ReadHoldDuration(const CSimpleIniA& ini)
 	{
-		const auto raw = static_cast<float>(ini.GetDoubleValue("General", "fHoldDuration", InputHandler::kDefaultHoldDuration));
-		const auto duration = HoldFast::ClampHoldDuration(raw, InputHandler::kDefaultHoldDuration, InputHandler::kMaxHoldDuration);
+		const auto raw = static_cast<float>(ini.GetDoubleValue("General", "fHoldDuration", HoldFast::kDefaultHoldDuration));
+		const auto duration = HoldFast::ClampHoldDuration(raw, HoldFast::kDefaultHoldDuration, HoldFast::kMaxHoldDuration);
 		if (duration == raw) {
 			return duration;
 		}
 		if (!std::isfinite(raw)) {
-			logger::warn("fHoldDuration is non-finite — using default {:.1f}", InputHandler::kDefaultHoldDuration);
+			logger::warn("fHoldDuration is non-finite — using default {:.1f}", HoldFast::kDefaultHoldDuration);
 			return duration;
 		}
 		if (raw <= 0.0F) {
-			logger::warn("fHoldDuration ({:.2f}) must be positive — using default {:.1f}", raw, InputHandler::kDefaultHoldDuration);
+			logger::warn("fHoldDuration ({:.2f}) must be positive — using default {:.1f}", raw, HoldFast::kDefaultHoldDuration);
 			return duration;
 		}
-		logger::warn("fHoldDuration ({:.2f}) exceeds maximum {:.1f} — capping", raw, InputHandler::kMaxHoldDuration);
+		logger::warn("fHoldDuration ({:.2f}) exceeds maximum {:.1f} — capping", raw, HoldFast::kMaxHoldDuration);
 		return duration;
 	}
 }
@@ -52,12 +51,24 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 	}
 
 	settings.startAction = hasStart ? ParseAction(rawStart) : LongPressAction::kNone;
-	if (hasStart && settings.startAction == LongPressAction::kNone && HoldFast::TrimWhitespace(rawStart) != "none") {
-		logger::warn("sButtonStartAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawStart);
+	if (hasStart && settings.startAction == LongPressAction::kNone) {
+		std::string lower{ HoldFast::TrimWhitespace(rawStart) };
+		for (auto& c : lower) {
+			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+		}
+		if (lower != "none") {
+			logger::warn("sButtonStartAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawStart);
+		}
 	}
 	settings.backAction = hasBack ? ParseAction(rawBack) : LongPressAction::kNone;
-	if (hasBack && settings.backAction == LongPressAction::kNone && HoldFast::TrimWhitespace(rawBack) != "none") {
-		logger::warn("sButtonBackAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawBack);
+	if (hasBack && settings.backAction == LongPressAction::kNone) {
+		std::string lower{ HoldFast::TrimWhitespace(rawBack) };
+		for (auto& c : lower) {
+			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+		}
+		if (lower != "none") {
+			logger::warn("sButtonBackAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawBack);
+		}
 	}
 	return settings;
 }
@@ -84,11 +95,11 @@ bool HoldFast::Config::SaveSettings(const Settings& settings)
 	return true;
 }
 
-std::vector<InputHandler::ButtonConfig> HoldFast::Config::BuildButtons(const Settings& settings)
+std::vector<ButtonConfig> HoldFast::Config::BuildButtons(const Settings& settings)
 {
 	using Key = RE::BSWin32GamepadDevice::Key;
 
-	std::vector<InputHandler::ButtonConfig> buttons;
+	std::vector<ButtonConfig> buttons;
 	if (settings.startAction != LongPressAction::kNone) {
 		buttons.push_back({ .keyCode = static_cast<std::uint32_t>(Key::kStart), .name = "Start", .action = settings.startAction });
 	}

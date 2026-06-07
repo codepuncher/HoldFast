@@ -1,11 +1,12 @@
 #pragma once
 
 #include <chrono>
-#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "LongPressAction.h"
 
 class InputHandler :
 	public RE::BSTEventSink<RE::InputEvent*>,
@@ -25,33 +26,11 @@ public:
 		const RE::MenuOpenCloseEvent*               a_event,
 		RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_source) override;
 
-	static constexpr float kDefaultHoldDuration{ 0.5F };
-	static constexpr float kMaxHoldDuration{ 5.0F };
+	static constexpr float kDefaultHoldDuration{ HoldFast::kDefaultHoldDuration };
+	static constexpr float kMaxHoldDuration{ HoldFast::kMaxHoldDuration };
 
-	enum class LongPressAction
-	{
-		kNone,
-		kMap,
-		kSystem,
-		kQuests,
-		kStats,
-		kInventory,
-		kMagic,
-		kFavorites,
-		kTweenMenu,
-		kWait,
-		kNewSave,
-		kQuickSave,
-		kBestiary,
-		kCharacterSheet,
-	};
-
-	struct ButtonConfig
-	{
-		std::uint32_t   keyCode{};
-		std::string     name;
-		LongPressAction action{ LongPressAction::kNone };
-	};
+	using LongPressAction = ::LongPressAction;
+	using ButtonConfig = ::ButtonConfig;
 
 	void SetHoldDuration(float a_duration) noexcept { holdDuration = a_duration; }
 

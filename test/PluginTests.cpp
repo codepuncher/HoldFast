@@ -46,7 +46,7 @@ TEST_CASE("ClampHoldDuration clamps and validates values", "[utils]")
 
 TEST_CASE("ParseAction accepts case-insensitive and trimmed values", "[config]")
 {
-	using Action = InputHandler::LongPressAction;
+	using Action = LongPressAction;
 
 	CHECK(ParseAction("Map") == Action::kMap);
 	CHECK(ParseAction("  map  ") == Action::kMap);
@@ -56,18 +56,23 @@ TEST_CASE("ParseAction accepts case-insensitive and trimmed values", "[config]")
 
 TEST_CASE("ParseAction supports favourites alias and invalid fallback", "[config]")
 {
-	using Action = InputHandler::LongPressAction;
+	using Action = LongPressAction;
 
 	CHECK(ParseAction("Favorites") == Action::kFavorites);
 	CHECK(ParseAction("Favourites") == Action::kFavorites);
 	CHECK(ParseAction("not-an-action") == Action::kNone);
 	CHECK(ParseAction("") == Action::kNone);
 	CHECK(ParseAction("   ") == Action::kNone);
+
+	// None in any casing/whitespace must parse to kNone without warning
+	CHECK(ParseAction("None") == Action::kNone);
+	CHECK(ParseAction("NONE") == Action::kNone);
+	CHECK(ParseAction("  None  ") == Action::kNone);
 }
 
 TEST_CASE("ActionName maps enum values and falls back to None", "[config]")
 {
-	using Action = InputHandler::LongPressAction;
+	using Action = LongPressAction;
 
 	CHECK(ActionName(Action::kMap) == "Map");
 	CHECK(ActionName(Action::kQuickSave) == "QuickSave");

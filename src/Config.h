@@ -4,46 +4,48 @@
 #include <string_view>
 #include <vector>
 
-#include "InputHandler.h"
+#include "LongPressAction.h"
+
+class InputHandler;
 
 namespace HoldFast::Config
 {
 	struct Settings
 	{
-		float                         holdDuration{ InputHandler::kDefaultHoldDuration };
-		InputHandler::LongPressAction startAction{ InputHandler::LongPressAction::kMap };
-		InputHandler::LongPressAction backAction{ InputHandler::LongPressAction::kSystem };
+		float           holdDuration{ HoldFast::kDefaultHoldDuration };
+		LongPressAction startAction{ LongPressAction::kMap };
+		LongPressAction backAction{ LongPressAction::kSystem };
 	};
 
 	struct ActionOption
 	{
-		std::string_view              name;
-		InputHandler::LongPressAction action;
+		std::string_view name;
+		LongPressAction  action;
 	};
 
 	inline constexpr std::array<ActionOption, 14> kActionOptions{ {
-		{ "Map", InputHandler::LongPressAction::kMap },
-		{ "System", InputHandler::LongPressAction::kSystem },
-		{ "Quests", InputHandler::LongPressAction::kQuests },
-		{ "Stats", InputHandler::LongPressAction::kStats },
-		{ "Inventory", InputHandler::LongPressAction::kInventory },
-		{ "Magic", InputHandler::LongPressAction::kMagic },
-		{ "Favorites", InputHandler::LongPressAction::kFavorites },
-		{ "TweenMenu", InputHandler::LongPressAction::kTweenMenu },
-		{ "Wait", InputHandler::LongPressAction::kWait },
-		{ "NewSave", InputHandler::LongPressAction::kNewSave },
-		{ "QuickSave", InputHandler::LongPressAction::kQuickSave },
-		{ "Bestiary", InputHandler::LongPressAction::kBestiary },
-		{ "CharacterSheet", InputHandler::LongPressAction::kCharacterSheet },
-		{ "None", InputHandler::LongPressAction::kNone },
+		{ "Map", LongPressAction::kMap },
+		{ "System", LongPressAction::kSystem },
+		{ "Quests", LongPressAction::kQuests },
+		{ "Stats", LongPressAction::kStats },
+		{ "Inventory", LongPressAction::kInventory },
+		{ "Magic", LongPressAction::kMagic },
+		{ "Favorites", LongPressAction::kFavorites },
+		{ "TweenMenu", LongPressAction::kTweenMenu },
+		{ "Wait", LongPressAction::kWait },
+		{ "NewSave", LongPressAction::kNewSave },
+		{ "QuickSave", LongPressAction::kQuickSave },
+		{ "Bestiary", LongPressAction::kBestiary },
+		{ "CharacterSheet", LongPressAction::kCharacterSheet },
+		{ "None", LongPressAction::kNone },
 	} };
 
 	[[nodiscard]] Settings LoadSettings();
 	[[nodiscard]] bool     SaveSettings(const Settings& settings);
 
-	[[nodiscard]] std::vector<InputHandler::ButtonConfig> BuildButtons(const Settings& settings);
-	void                                                  ApplySettings(InputHandler& handler, const Settings& settings);
+	[[nodiscard]] std::vector<ButtonConfig> BuildButtons(const Settings& settings);
+	void                                    ApplySettings(InputHandler& handler, const Settings& settings);
 
-	[[nodiscard]] InputHandler::LongPressAction ParseAction(std::string_view raw);
-	[[nodiscard]] std::string_view              ActionName(InputHandler::LongPressAction action);
+	[[nodiscard]] LongPressAction  ParseAction(std::string_view raw);
+	[[nodiscard]] std::string_view ActionName(LongPressAction action);
 }

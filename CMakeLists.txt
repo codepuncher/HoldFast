@@ -88,6 +88,7 @@ else()
         src/ConfigParsing.cpp
         src/InputHandler.h
         src/InputHandler.cpp
+        src/LongPressAction.h
         src/MenuUI.h
         src/MenuUI.cpp
         src/Plugin.cpp

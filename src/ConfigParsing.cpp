@@ -4,12 +4,7 @@
 #include "Config.h"
 #include "Utils.h"
 
-namespace
-{
-	using LongPressAction = InputHandler::LongPressAction;
-}
-
-InputHandler::LongPressAction HoldFast::Config::ParseAction(std::string_view raw)
+LongPressAction HoldFast::Config::ParseAction(std::string_view raw)
 {
 	static const std::unordered_map<std::string, LongPressAction> kActionMap{
 		{ "map", LongPressAction::kMap },

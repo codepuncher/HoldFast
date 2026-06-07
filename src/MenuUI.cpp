@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "Config.h"
+#include "InputHandler.h"
 #include "MenuUI.h"
 #include "SKSEMCP/utils.hpp"
 #include "Utils.h"
