@@ -25,6 +25,10 @@ namespace
 			logger::warn("fHoldDuration ({:.2f}) must be positive — using default {:.1f}", raw, HoldFast::kDefaultHoldDuration);
 			return duration;
 		}
+		if (raw < HoldFast::kMinHoldDuration) {
+			logger::warn("fHoldDuration ({:.2f}) is below minimum {:.1f} — using default {:.1f}", raw, HoldFast::kMinHoldDuration, HoldFast::kDefaultHoldDuration);
+			return duration;
+		}
 		logger::warn("fHoldDuration ({:.2f}) exceeds maximum {:.1f} — capping", raw, HoldFast::kMaxHoldDuration);
 		return duration;
 	}
