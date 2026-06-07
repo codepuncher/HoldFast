@@ -24,7 +24,7 @@ namespace
 		if (menuFramework) {
 			return true;
 		}
-		menuFramework = LoadLibraryW(L"Data/SKSE/Plugins/SKSEMenuFramework.dll");
+		menuFramework = LoadLibraryW(LR"(Data\SKSE\Plugins\SKSEMenuFramework.dll)");
 		return menuFramework != nullptr;
 	}
 
