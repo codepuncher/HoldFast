@@ -21,11 +21,13 @@ Inspired by Red Dead Redemption 2's hold-Start-to-open-map mechanic.
 ## Installation
 
 **Mod manager (recommended):**
+
 1. Install the requirements above.
 2. Install HoldFast via your mod manager.
 3. Launch Skyrim via SKSE.
 
 **Manual:**
+
 1. Install the requirements above.
 2. Copy `HoldFast.dll` and `HoldFast.ini` to `Data\SKSE\Plugins\`.
 3. Launch Skyrim via SKSE.
@@ -48,24 +50,25 @@ sButtonBackAction=System
 
 **Valid actions:**
 
-| Value | What it does |
-|-------|-------------|
-| `Map` | Opens the map |
-| `System` | Opens the Journal on the System tab |
-| `Quests` | Opens the Journal on the Quests tab |
-| `Stats` | Opens the Journal on the Stats tab |
-| `Inventory` | Opens the inventory |
-| `Magic` | Opens the magic menu |
-| `Favorites` | Opens the favourites menu |
-| `TweenMenu` | Opens the tween menu (Items/Magic/Map/Skills) |
-| `Wait` | Opens the sleep/wait menu |
-| `NewSave` | Performs a new save |
-| `QuickSave` | Performs a quicksave |
-| `Bestiary` | Opens The Dragonborn's Bestiary (requires mod) |
-| `CharacterSheet` | Opens Character Menu SE (requires mod) |
-| `None` | Button not intercepted |
+| Value            | What it does                                   |
+| ---------------- | ---------------------------------------------- |
+| `Map`            | Opens the map                                  |
+| `System`         | Opens the Journal on the System tab            |
+| `Quests`         | Opens the Journal on the Quests tab            |
+| `Stats`          | Opens the Journal on the Stats tab             |
+| `Inventory`      | Opens the inventory                            |
+| `Magic`          | Opens the magic menu                           |
+| `Favorites`      | Opens the favourites menu                      |
+| `TweenMenu`      | Opens the tween menu (Items/Magic/Map/Skills)  |
+| `Wait`           | Opens the sleep/wait menu                      |
+| `NewSave`        | Performs a new save                            |
+| `QuickSave`      | Performs a quicksave                           |
+| `Bestiary`       | Opens The Dragonborn's Bestiary (requires mod) |
+| `CharacterSheet` | Opens Character Menu SE (requires mod)         |
+| `None`           | Button not intercepted                         |
 
 Logs are written to:
+
 ```
 %USERPROFILE%\Documents\My Games\Skyrim Special Edition\SKSE\HoldFast.log
 ```
@@ -79,11 +82,13 @@ Logs are written to:
 ### Prerequisites
 
 #### All platforms
+
 - [Git](https://git-scm.com/)
 - [CMake](https://cmake.org/download/) 3.21+
 - vcpkg — set `VCPKG_ROOT` in your environment
 
 #### Linux
+
 - LLVM/Clang (`clang-cl`, `lld-link`, `llvm-lib`, `llvm-rc`, `llvm-mt`)
 - [xwin](https://github.com/Jake-Shadle/xwin) — downloads the Windows SDK and MSVC CRT headers/libs
 - [Ninja](https://ninja-build.org/)
@@ -102,6 +107,7 @@ xwin splat --output ~/.xwin
 > **Note:** On first CMake configure, `cmake/toolchains/clang-cl-cross.cmake` creates TitleCase symlinks inside your xwin installation (e.g. `Advapi32.lib → advapi32.lib`). The originals are untouched. This is required because `lld-link` is case-sensitive but CommonLibSSE-NG references libs with mixed-case names.
 
 #### Windows
+
 - [Visual Studio 2022](https://visualstudio.microsoft.com/) with **Desktop development with C++**
 
 ---
@@ -174,14 +180,22 @@ ctest --preset test-windows
 ### Git Hooks (Lefthook)
 
 Prerequisites:
+
 - `go install github.com/evilmartians/lefthook@latest`
 - `clang-format` and `clang-tidy` (part of LLVM)
 - `cmake-format` (`sudo pacman -S cmake-format` on Arch/CachyOS; `pip install cmakelang` elsewhere)
 - `shellcheck` (`sudo pacman -S shellcheck` on Arch/CachyOS)
+- [dprint](https://dprint.dev/install/)
+- [Vale CLI](https://vale.sh/docs/vale-cli/installation/)
 
 ```bash
 lefthook install
 ```
+
+Markdown checks in hooks:
+
+- `dprint` formats staged `README.md` and `docs/**/*.md`
+- `vale` lints staged `README.md` and `docs/**/*.md` (warnings and errors fail the hook)
 
 ---
 
@@ -199,6 +213,23 @@ Recommended plugins: [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig) 
 
 ---
 
+### Markdown Linting and Formatting
+
+This repository uses Markdown tooling:
+
+- `dprint` for formatting
+- `vale` for prose/style linting
+
+Run locally:
+
+```bash
+dprint fmt "README.md" "docs/**/*.md"
+dprint check "README.md" "docs/**/*.md"
+vale --glob='*.md' README.md docs
+```
+
+---
+
 ### Updating CommonLibSSE-NG
 
 ```bash
@@ -211,13 +242,13 @@ git commit -m "chore: update CommonLibSSE-NG submodule"
 
 ### CI
 
-| Workflow | Trigger | What it does |
-|---|---|---|
-| `ci.yml` | PRs to `main` touching source/cmake/vcpkg | clang-format (ubuntu) → clang-tidy + build (windows, parallel) |
-| `release.yml` | Push of a `v*` tag | Builds release DLL and publishes GitHub Release |
-| `nexus-upload.yml` | Release publish or manual `workflow_dispatch` | Uploads the packaged ZIP to Nexus Mods |
-| `lint.yml` | PRs touching `scripts/` | shellcheck on shell scripts |
-| `pr-title.yml` | PR opened/edited/synchronised | Validates PR title follows Conventional Commits |
+| Workflow           | Trigger                                                                     | What it does                                                   |
+| ------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `ci.yml`           | PRs to `main` touching source/cmake/vcpkg                                   | clang-format (ubuntu) → clang-tidy + build (windows, parallel) |
+| `release.yml`      | Push of a `v*` tag                                                          | Builds release DLL and publishes GitHub Release                |
+| `nexus-upload.yml` | Release publish or manual `workflow_dispatch`                               | Uploads the packaged ZIP to Nexus Mods                         |
+| `lint.yml`         | PRs touching scripts, markdown docs, or markdown lint config/workflow files | shellcheck (scripts) + markdown checks (`dprint` and `vale`)   |
+| `pr-title.yml`     | PR opened/edited/synchronised                                               | Validates PR title follows Conventional Commits                |
 
 #### Nexus Mods Upload
 
@@ -229,13 +260,13 @@ Triggered on release publish, or manually via **workflow_dispatch** with the `ve
    - **Variable** `NEXUSMODS_FILE_GROUP_ID` — the file group ID
 
 Upload behavior is configured as:
+
 - `archive_existing_file: true`
 - `primary_mod_manager_download: true`
 - `allow_mod_manager_download: true`
 - `show_requirements_pop_up: true`
 
 ---
-
 
 ## Credits
 

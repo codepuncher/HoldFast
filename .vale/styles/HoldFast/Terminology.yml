@@ -1,0 +1,6 @@
+extends: substitution
+message: "Use '%s' instead of '%s'."
+level: warning
+ignorecase: false
+swap:
+  skse menu framework: SKSE Menu Framework
