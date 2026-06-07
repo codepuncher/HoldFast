@@ -1,7 +1,5 @@
 #include "PCH.h"
 
-#include <memory>
-
 #include "Config.h"
 #include "InputHandler.h"
 #include "MenuUI.h"

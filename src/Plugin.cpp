@@ -35,10 +35,6 @@ void SetupLog()
 void OnInputLoaded()
 {
 	auto* handler = InputHandler::GetSingleton();
-	if (!handler) {
-		logger::error("Failed to get InputHandler singleton");
-		return;
-	}
 
 	const auto settings = HoldFast::Config::LoadSettings();
 	logger::info("Hold duration: {:.2f}s", settings.holdDuration);
