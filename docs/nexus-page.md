@@ -55,6 +55,7 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 [size=4][b][color=#B8953E]Installation[/color][/b][/size]
 
 [b]Mod manager (recommended):[/b]
+
 [list=1]
 [*]Install the requirements above.
 [*]Install HoldFast via your mod manager.
@@ -62,6 +63,7 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 [/list]
 
 [b]Manual:[/b]
+
 [list=1]
 [*]Install the requirements above.
 [*]Copy [font=Courier New]HoldFast.dll[/font] and [font=Courier New]HoldFast.ini[/font] to [font=Courier New]Data\SKSE\Plugins\[/font].
@@ -87,6 +89,7 @@ sButtonBackAction=System
 [/code]
 
 [b]In-game settings (optional):[/b]
+
 If SKSE Menu Framework v3 is installed, HoldFast adds a [font=Courier New]HoldFast/Settings[/font] page in its mod control panel.
 Use [b]Save to config[/b] to persist and apply changes, [b]Reload from config[/b] to discard staged edits and reload INI values, and [b]Reset to defaults[/b] to stage defaults ([font=Courier New]0.5[/font], [font=Courier New]Start=Map[/font], [font=Courier New]Back=System[/font]) until saved.
 
@@ -110,6 +113,7 @@ Use [b]Save to config[/b] to persist and apply changes, [b]Reload from config[/b
 [/list]
 
 Logs are written to:
+
 [code]
 %USERPROFILE%\Documents\My Games\Skyrim Special Edition\SKSE\HoldFast.log
 [/code]
