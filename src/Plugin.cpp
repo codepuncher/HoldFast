@@ -1,13 +1,8 @@
 #include "PCH.h"
 
-#include <cctype>
-#include <unordered_map>
-
+#include "Config.h"
 #include "InputHandler.h"
-#include "Utils.h"
-
-using HoldFast::ClampHoldDuration;
-using HoldFast::TrimWhitespace;
+#include "MenuUI.h"
 
 void SetupLog()
 {
@@ -37,144 +32,21 @@ void SetupLog()
 	spdlog::flush_on(spdlog::level::info);
 }
 
-float ReadHoldDuration(const CSimpleIniA& a_ini)
-{
-	const auto raw = static_cast<float>(a_ini.GetDoubleValue("General", "fHoldDuration", InputHandler::kDefaultHoldDuration));
-	const auto duration = ClampHoldDuration(raw, InputHandler::kDefaultHoldDuration, InputHandler::kMaxHoldDuration);
-	if (duration != raw) {
-		if (!std::isfinite(raw)) {
-			logger::warn("fHoldDuration is non-finite — using default {:.1f}", InputHandler::kDefaultHoldDuration);
-		} else if (raw <= 0.0F) {
-			logger::warn("fHoldDuration ({:.2f}) must be positive — using default {:.1f}", raw, InputHandler::kDefaultHoldDuration);
-		} else {
-			logger::warn("fHoldDuration ({:.2f}) exceeds maximum {:.1f} — capping", raw, InputHandler::kMaxHoldDuration);
-		}
-	}
-	return duration;
-}
-
-using LongPressAction = InputHandler::LongPressAction;
-
-LongPressAction ReadLongPressAction(std::string_view raw, const char* iniKey)
-{
-	static const std::unordered_map<std::string, LongPressAction> kActionMap{
-		{ "map", LongPressAction::kMap },
-		{ "system", LongPressAction::kSystem },
-		{ "quests", LongPressAction::kQuests },
-		{ "stats", LongPressAction::kStats },
-		{ "inventory", LongPressAction::kInventory },
-		{ "magic", LongPressAction::kMagic },
-		{ "favorites", LongPressAction::kFavorites },
-		{ "favourites", LongPressAction::kFavorites },
-		{ "tweenmenu", LongPressAction::kTweenMenu },
-		{ "wait", LongPressAction::kWait },
-		{ "newsave", LongPressAction::kNewSave },
-		{ "quicksave", LongPressAction::kQuickSave },
-		{ "bestiary", LongPressAction::kBestiary },
-		{ "charactersheet", LongPressAction::kCharacterSheet },
-		{ "none", LongPressAction::kNone },
-	};
-
-	const auto  trimmed = TrimWhitespace(raw);
-	std::string lower{ trimmed };
-	std::ranges::transform(lower, lower.begin(), [](unsigned char c) {
-		return static_cast<char>(std::tolower(c));
-	});
-
-	const auto it = kActionMap.find(lower);
-	if (it == kActionMap.end()) {
-		logger::warn("{}='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", iniKey, raw);
-		return LongPressAction::kNone;
-	}
-	return it->second;
-}
-
-using ButtonConfig = InputHandler::ButtonConfig;
-
-std::vector<ButtonConfig> ReadButtons(const CSimpleIniA& a_ini)
-{
-	using Key = RE::BSWin32GamepadDevice::Key;
-
-	struct ButtonDef
-	{
-		const char*   iniKey;
-		std::uint32_t keyCode;
-		const char*   name;
-	};
-
-	static const std::array<ButtonDef, 2> kButtonDefs{ {
-		{ .iniKey = "sButtonStartAction", .keyCode = static_cast<std::uint32_t>(Key::kStart), .name = "Start" },
-		{ .iniKey = "sButtonBackAction", .keyCode = static_cast<std::uint32_t>(Key::kBack), .name = "Back" },
-	} };
-
-	std::vector<ButtonConfig> result;
-	bool                      anyKeyPresent = false;
-
-	for (const auto& def : kButtonDefs) {
-		const char* raw = a_ini.GetValue("General", def.iniKey, nullptr);
-		if (!raw || TrimWhitespace(raw).empty()) {
-			continue;  // absent or blank → treated as absent, no warning
-		}
-		anyKeyPresent = true;
-		const auto action = ReadLongPressAction(raw, def.iniKey);
-		if (action == LongPressAction::kNone) {
-			continue;  // kNone entries are excluded
-		}
-		result.push_back({ .keyCode = def.keyCode, .name = def.name, .action = action });
-	}
-
-	if (!anyKeyPresent) {
-		logger::info("No button action keys found — applying defaults (Start=Map, Back=System)");
-		return {
-			{ .keyCode = static_cast<std::uint32_t>(Key::kStart), .name = "Start", .action = LongPressAction::kMap },
-			{ .keyCode = static_cast<std::uint32_t>(Key::kBack), .name = "Back", .action = LongPressAction::kSystem },
-		};
-	}
-
-	return result;
-}
-
 void OnInputLoaded()
 {
 	auto* handler = InputHandler::GetSingleton();
 
-	CSimpleIniA ini;
-	const auto  rc = ini.LoadFile(R"(Data\SKSE\Plugins\HoldFast.ini)");
-	if (rc < SI_OK) {
-		logger::warn("HoldFast.ini not found or could not be parsed (rc={}) — using defaults", static_cast<int>(rc));
-	}
+	const auto settings = HoldFast::Config::LoadSettings();
+	logger::info("Hold duration: {:.2f}s", settings.holdDuration);
+	logger::info("Start → {}", HoldFast::Config::ActionName(settings.startAction));
+	logger::info("Back → {}", HoldFast::Config::ActionName(settings.backAction));
 
-	const float holdDuration = ReadHoldDuration(ini);
-	handler->SetHoldDuration(holdDuration);
-	logger::info("Hold duration: {:.2f}s", holdDuration);
-
-	auto buttons = ReadButtons(ini);
+	auto buttons = HoldFast::Config::BuildButtons(settings);
 	if (buttons.empty()) {
-		logger::warn("No buttons configured — HoldFast is inactive");
-		return;
+		logger::warn("No buttons configured — HoldFast long-press interception disabled");
 	}
 
-	for (const auto& btn : buttons) {
-		static const std::unordered_map<LongPressAction, std::string_view> kActionNames{
-			{ LongPressAction::kMap, "Map" },
-			{ LongPressAction::kSystem, "System" },
-			{ LongPressAction::kQuests, "Quests" },
-			{ LongPressAction::kStats, "Stats" },
-			{ LongPressAction::kInventory, "Inventory" },
-			{ LongPressAction::kMagic, "Magic" },
-			{ LongPressAction::kFavorites, "Favorites" },
-			{ LongPressAction::kTweenMenu, "TweenMenu" },
-			{ LongPressAction::kWait, "Wait" },
-			{ LongPressAction::kNewSave, "NewSave" },
-			{ LongPressAction::kQuickSave, "QuickSave" },
-			{ LongPressAction::kBestiary, "Bestiary" },
-			{ LongPressAction::kCharacterSheet, "CharacterSheet" },
-		};
-		const auto it = kActionNames.find(btn.action);
-		const auto actionName = it != kActionNames.end() ? it->second : "Unknown";
-		logger::info("{} → {}", btn.name, actionName);
-	}
-
+	handler->SetHoldDuration(settings.holdDuration);
 	handler->SetButtons(std::move(buttons));
 
 	auto* inputDeviceMgr = RE::BSInputDeviceManager::GetSingleton();
@@ -229,6 +101,8 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		logger::error("Failed to register messaging listener");
 		return false;
 	}
+
+	HoldFastMenuUI::Register();
 
 	return true;
 }

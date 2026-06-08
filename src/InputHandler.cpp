@@ -1,6 +1,7 @@
 #include "PCH.h"
 
 #include "InputHandler.h"
+#include "MenuUI.h"
 
 namespace
 {
@@ -125,6 +126,16 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		RestoreJournalTab();
 	}
 
+	// If SKSE Menu Framework owns input focus, pass input through and clear held-state
+	// captures so Start/Back interception cannot fight the settings UI.
+	if (!_buttons.empty() && HoldFastMenuUI::IsBlockingInput()) {
+		for (auto& bs : _buttons) {
+			bs.pressTime.reset();
+			bs.triggered = false;
+		}
+		return RE::BSEventNotifyControl::kContinue;
+	}
+
 	// If any pausing menu is open, pass all input through and clear any captured press so it
 	// can't fire a spurious dispatch once the menu closes.
 	// Also pass through for kCharacterSheet: it uses kModal but not kPausesGame, so
@@ -141,6 +152,16 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
+	// kStop halts the entire frame's event batch for all downstream sinks. With both Start
+	// and Back tracked by default, this fires on every press of either managed button.
+	// Pressing any other input while a managed button hold is in progress is suppressed from
+	// downstream sinks. This is intentional: hold detection requires exclusive ownership of
+	// those frames. Selective kStop per event is not feasible with CommonLib's batch API.
+	return ScanInputEvents(a_events) ? RE::BSEventNotifyControl::kStop : RE::BSEventNotifyControl::kContinue;
+}
+
+bool InputHandler::ScanInputEvents(RE::InputEvent* const* a_events)
+{
 	bool shouldBlock = false;
 
 	for (auto* event = *a_events; event; event = event->next) {
@@ -161,12 +182,7 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		}
 	}
 
-	// kStop halts the entire frame's event batch for all downstream sinks. With both Start
-	// and Back tracked by default, this fires on every press of either managed button.
-	// Pressing any other input while a managed button hold is in progress is suppressed from
-	// downstream sinks. This is intentional: hold detection requires exclusive ownership of
-	// those frames. Selective kStop per event is not feasible with CommonLib's batch API.
-	return shouldBlock ? RE::BSEventNotifyControl::kStop : RE::BSEventNotifyControl::kContinue;
+	return shouldBlock;
 }
 
 bool InputHandler::ProcessButton(const RE::ButtonEvent* btn, ButtonState& state)

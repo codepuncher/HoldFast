@@ -6,3 +6,6 @@
 	path = lib/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
 	shallow = true
+[submodule "lib/skse-mcp"]
+	path = lib/skse-mcp
+	url = https://github.com/QTR-Modding/SKSE-MCP.git

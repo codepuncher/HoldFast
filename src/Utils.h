@@ -16,10 +16,10 @@ namespace HoldFast
 		return s.substr(first, s.find_last_not_of(" \t\r\n") - first + 1);
 	}
 
-	[[nodiscard]] inline float ClampHoldDuration(float value, float defaultVal, float maxVal)
+	[[nodiscard]] inline float ClampHoldDuration(float value, float defaultVal, float minVal, float maxVal)
 	{
-		assert(defaultVal > 0.0F && defaultVal <= maxVal);
-		if (!std::isfinite(value) || value <= 0.0F) {
+		assert(minVal > 0.0F && defaultVal >= minVal && defaultVal <= maxVal);
+		if (!std::isfinite(value) || value < minVal) {
 			return defaultVal;
 		}
 		if (value > maxVal) {
