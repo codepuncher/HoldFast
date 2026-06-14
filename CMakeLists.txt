@@ -89,6 +89,8 @@ else()
         src/InputHandler.h
         src/InputHandler.cpp
         src/LongPressAction.h
+        src/MCMNavigator.h
+        src/MCMNavigator.cpp
         src/MenuUI.h
         src/MenuUI.cpp
         src/Plugin.cpp

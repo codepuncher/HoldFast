@@ -26,6 +26,7 @@ enum class LongPressAction
 	kQuickSave,
 	kBestiary,
 	kCharacterSheet,
+	kMCM,
 };
 
 struct ButtonConfig
@@ -33,4 +34,6 @@ struct ButtonConfig
 	std::uint32_t   keyCode{};
 	std::string     name;
 	LongPressAction action{ LongPressAction::kNone };
+	std::string     mcmModName{ "None" };
+	bool            mcmQuickexit{ true };
 };

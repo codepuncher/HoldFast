@@ -15,6 +15,10 @@ namespace HoldFast::Config
 		float           holdDuration{ HoldFast::kDefaultHoldDuration };
 		LongPressAction startAction{ LongPressAction::kMap };
 		LongPressAction backAction{ LongPressAction::kSystem };
+		std::string     startMCMModName{ "None" };
+		std::string     backMCMModName{ "None" };
+		bool            startMCMQuickexit{ true };
+		bool            backMCMQuickexit{ true };
 	};
 
 	struct ActionOption
@@ -23,7 +27,7 @@ namespace HoldFast::Config
 		LongPressAction action;
 	};
 
-	inline constexpr std::array<ActionOption, 14> kActionOptions{ {
+	inline constexpr std::array<ActionOption, 15> kActionOptions{ {
 		{ "Map", LongPressAction::kMap },
 		{ "System", LongPressAction::kSystem },
 		{ "Quests", LongPressAction::kQuests },
@@ -37,6 +41,7 @@ namespace HoldFast::Config
 		{ "QuickSave", LongPressAction::kQuickSave },
 		{ "Bestiary", LongPressAction::kBestiary },
 		{ "CharacterSheet", LongPressAction::kCharacterSheet },
+		{ "MCM", LongPressAction::kMCM },
 		{ "None", LongPressAction::kNone },
 	} };
 

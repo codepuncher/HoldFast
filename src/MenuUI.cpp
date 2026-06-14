@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "InputHandler.h"
+#include "MCMNavigator.h"
 #include "MenuUI.h"
 #include "SKSEMCP/utils.hpp"
 #include "Utils.h"
@@ -66,7 +67,11 @@ namespace
 	{
 		return lhs.holdDuration == rhs.holdDuration &&
 		       lhs.startAction == rhs.startAction &&
-		       lhs.backAction == rhs.backAction;
+		       lhs.backAction == rhs.backAction &&
+		       lhs.startMCMModName == rhs.startMCMModName &&
+		       lhs.backMCMModName == rhs.backMCMModName &&
+		       lhs.startMCMQuickexit == rhs.startMCMQuickexit &&
+		       lhs.backMCMQuickexit == rhs.backMCMQuickexit;
 	}
 
 	bool DrawActionCombo(const char* label, InputHandler::LongPressAction& value)
@@ -133,13 +138,61 @@ namespace
 		state.hasPendingChanges = !SettingsEqual(defaults, loaded);
 	}
 
+	void DrawMCMTargetInputs(const char* modLabel, std::string& modName, bool& changed)
+	{
+		MCMNavigator::EnsureCachePopulated();
+
+		const auto  cachedMods = MCMNavigator::GetCachedModNames();
+		const char* preview = modName.empty() || modName == "None" ? "None" : modName.c_str();
+
+		if (!ImGuiMCP::BeginCombo(modLabel, preview)) {
+			return;
+		}
+
+		const bool noneSelected = modName.empty() || modName == "None";
+		if (ImGuiMCP::Selectable("None", noneSelected)) {
+			modName = "None";
+			changed = true;
+		}
+
+		if (cachedMods.empty()) {
+			ImGuiMCP::Selectable("(Open MCM once to populate)", false, ImGuiMCP::ImGuiSelectableFlags_Disabled);
+			ImGuiMCP::EndCombo();
+			return;
+		}
+
+		for (const auto& opt : cachedMods) {
+			if (ImGuiMCP::Selectable(opt.c_str(), opt == modName)) {
+				modName = opt;
+				changed = true;
+				break;
+			}
+		}
+
+		ImGuiMCP::EndCombo();
+	}
+
 	void __stdcall RenderSettings()
 	{
 		auto& state = GetMenuState();
 		bool  changed = false;
 		changed |= ImGuiMCP::SliderFloat("Hold duration", &state.stagedSettings.holdDuration, InputHandler::kMinHoldDuration, InputHandler::kMaxHoldDuration, "%.2fs");
 		changed |= DrawActionCombo("Start long-press action", state.stagedSettings.startAction);
+		if (state.stagedSettings.startAction == InputHandler::LongPressAction::kMCM) {
+			DrawMCMTargetInputs(
+				"Start MCM mod name",
+				state.stagedSettings.startMCMModName,
+				changed);
+			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM##start", &state.stagedSettings.startMCMQuickexit);
+		}
 		changed |= DrawActionCombo("Back long-press action", state.stagedSettings.backAction);
+		if (state.stagedSettings.backAction == InputHandler::LongPressAction::kMCM) {
+			DrawMCMTargetInputs(
+				"Back MCM mod name",
+				state.stagedSettings.backMCMModName,
+				changed);
+			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM##back", &state.stagedSettings.backMCMQuickexit);
+		}
 
 		if (changed) {
 			state.hasPendingChanges = true;
