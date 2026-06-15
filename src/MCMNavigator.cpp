@@ -306,11 +306,15 @@ namespace MCMNavigator
 		if (!IsMCMOpen()) {
 			return;
 		}
+		const auto* taskIface = SKSE::GetTaskInterface();
+		if (!taskIface) {
+			return;
+		}
 		// Debounce — only one pending AddUITask at a time.
 		if (g_cachePending.exchange(true)) {
 			return;
 		}
-		AddUITask([]() {
+		taskIface->AddUITask([]() {
 			if (!IsMCMOpen()) {
 				g_cachePending = false;
 				return;
@@ -321,12 +325,12 @@ namespace MCMNavigator
 				return;
 			}
 			// CacheModListFromPapyrus uses Papyrus VM APIs — must run on the game thread.
-			const auto* taskIface = SKSE::GetTaskInterface();
-			if (!taskIface) {
+			const auto* inner = SKSE::GetTaskInterface();
+			if (!inner) {
 				g_cachePending = false;
 				return;
 			}
-			taskIface->AddTask(CacheModListFromPapyrus);
+			inner->AddTask(CacheModListFromPapyrus);
 		});
 	}
 
