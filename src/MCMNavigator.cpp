@@ -58,7 +58,8 @@ namespace MCMNavigator
 		// Debounces cache population AddUITask calls.
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::atomic<bool> g_cachePending{ false };
-		// Set once CacheModListFromPapyrus succeeds — prevents repeated VM lookups.
+		// Set when the Papyrus cache path is done — either successfully populated, SkyUI absent,
+		// or MCM Unlocked detected. Prevents further Papyrus lookups regardless of outcome.
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::atomic<bool> g_skyUICacheDone{ false };
 		// Set once EnsureCachePopulated successfully schedules CacheModListFromPapyrus.
