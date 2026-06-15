@@ -44,7 +44,7 @@ namespace
 			return "None";
 		}
 		std::string lower{ trimmed };
-		std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return std::tolower(c); });
+		std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 		return lower == "none" ? "None" : std::string{ trimmed };
 	}
 }
