@@ -21,8 +21,8 @@ namespace MCMNavigator
 	// Must be called on the game thread. No-op if SkyUI is not installed or script not yet bound.
 	void CacheModListFromPapyrus();
 
-	// Async. Safe to call from any thread. Schedules CacheModListFromPapyrus at most once;
-	// subsequent calls are no-ops regardless of whether caching succeeded.
+	// Async. Safe to call from any thread. Schedules CacheModListFromPapyrus once per session;
+	// retries only if the task interface was unavailable at the time of the call.
 	// TryCacheFromOpenMCM handles retries when the Journal is open.
 	void EnsureCachePopulated();
 }
