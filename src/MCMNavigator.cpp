@@ -78,24 +78,26 @@ namespace MCMNavigator
 			return menu ? menu->uiMovie.get() : nullptr;
 		}
 
-		void AddUITask(std::function<void()> func)
+		bool AddUITask(std::function<void()> func)
 		{
 			const auto* taskIface = SKSE::GetTaskInterface();
 			if (!taskIface) {
 				logger::warn("MCMNavigator: task interface unavailable");
-				return;
+				return false;
 			}
 			taskIface->AddUITask(std::move(func));
+			return true;
 		}
 
-		void DelayCallForUI(std::function<void()> func, int framesLeft)
+		bool DelayCallForUI(std::function<void()> func, int framesLeft)
 		{
 			if (framesLeft <= 0) {
-				AddUITask(std::move(func));
-				return;
+				return AddUITask(std::move(func));
 			}
-			AddUITask([func = std::move(func), framesLeft]() mutable {
-				DelayCallForUI(std::move(func), framesLeft - 1);
+			return AddUITask([func = std::move(func), framesLeft]() mutable {
+				if (!DelayCallForUI(std::move(func), framesLeft - 1)) {
+					g_lock = false;
+				}
 			});
 		}
 
@@ -218,7 +220,9 @@ namespace MCMNavigator
 			view->GetVariable(&disabled, disablePath.c_str());
 			if (!disabled.IsBool() || disabled.GetBool()) {
 				g_target.modRetries++;
-				DelayCallForUI(OpenMod, kModRetryFrames);
+				if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
+					g_lock = false;
+				}
 				return;
 			}
 
@@ -227,7 +231,9 @@ namespace MCMNavigator
 			auto mods = CollectEntryNames(view, std::string{ kModList }, "text");
 			if (mods.empty()) {
 				g_target.modRetries++;
-				DelayCallForUI(OpenMod, kModRetryFrames);
+				if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
+					g_lock = false;
+				}
 				return;
 			}
 
