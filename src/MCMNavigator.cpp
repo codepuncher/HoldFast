@@ -2,6 +2,10 @@
 
 #include "MCMNavigator.h"
 
+#include <functional>
+#include <mutex>
+#include <thread>
+
 namespace MCMNavigator
 {
 	namespace
