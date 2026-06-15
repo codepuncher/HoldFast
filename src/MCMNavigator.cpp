@@ -24,6 +24,13 @@ namespace MCMNavigator
 				[](unsigned char x, unsigned char y) { return std::tolower(x) < std::tolower(y); });
 		}
 
+		bool CaseInsensitiveEqual(std::string_view a, std::string_view b)
+		{
+			return std::ranges::equal(
+				a, b,
+				[](unsigned char x, unsigned char y) { return std::tolower(x) == std::tolower(y); });
+		}
+
 		std::string_view StripModNamePrefix(std::string_view name)
 		{
 			const auto pos = name.find("::");
@@ -159,7 +166,7 @@ namespace MCMNavigator
 				if (!nameVal.IsString()) {
 					continue;
 				}
-				if (targetName == nameVal.GetString()) {
+				if (CaseInsensitiveEqual(targetName, nameVal.GetString())) {
 					index = static_cast<int>(i);
 					break;
 				}
@@ -276,7 +283,7 @@ namespace MCMNavigator
 		RE::GFxValue      titleText;
 		const std::string titlePath = std::string{ kModListPanel } + "_titleText";
 		view->GetVariable(&titleText, titlePath.c_str());
-		return titleText.IsString() && modName == titleText.GetString();
+		return titleText.IsString() && CaseInsensitiveEqual(modName, titleText.GetString());
 	}
 
 	void CacheModListFromGFx()
