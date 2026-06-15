@@ -2,9 +2,9 @@
 
 #include "MCMNavigator.h"
 
+#include <cctype>
 #include <functional>
 #include <mutex>
-#include <thread>
 
 namespace MCMNavigator
 {
@@ -67,7 +67,12 @@ namespace MCMNavigator
 
 		void AddUITask(std::function<void()> func)
 		{
-			SKSE::GetTaskInterface()->AddUITask(std::move(func));
+			const auto* taskIface = SKSE::GetTaskInterface();
+			if (!taskIface) {
+				logger::warn("MCMNavigator: task interface unavailable");
+				return;
+			}
+			taskIface->AddUITask(std::move(func));
 		}
 
 		void DelayCallForUI(std::function<void()> func, int delayMs)

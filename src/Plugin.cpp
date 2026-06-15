@@ -94,7 +94,9 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 			case SKSE::MessagingInterface::kPostLoadGame:
 			case SKSE::MessagingInterface::kNewGame:
 				InputHandler::GetSingleton()->UpdateShortPressBinding();
-				SKSE::GetTaskInterface()->AddTask(MCMNavigator::CacheModListFromPapyrus);
+				if (const auto* taskIface = SKSE::GetTaskInterface()) {
+					taskIface->AddTask(MCMNavigator::CacheModListFromPapyrus);
+				}
 				break;
 			default:
 				break;
