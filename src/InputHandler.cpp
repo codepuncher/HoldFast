@@ -529,12 +529,12 @@ void InputHandler::InvokeScaleformTab(JournalTab tab)
 	if (_pendingMCMModName.empty() || _pendingMCMModName == "None") {
 		return;
 	}
-	std::string modName = std::move(_pendingMCMModName);
-	_pendingMCMModName.clear();
 	const auto* taskIface = SKSE::GetTaskInterface();
 	if (!taskIface) {
 		return;
 	}
+	std::string modName = std::move(_pendingMCMModName);
+	_pendingMCMModName.clear();
 	taskIface->AddUITask([mn = std::move(modName)]() noexcept {
 		MCMNavigator::NavigateToTarget(mn);
 	});
