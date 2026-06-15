@@ -638,6 +638,9 @@ void InputHandler::HandleMCMQuickexit()
 	if (modOpen) {
 		return;
 	}
+	if (MCMNavigator::IsMCMOpen()) {
+		return;
+	}
 	ResetMCMQuickexitState();
 	CloseJournal();
 }
