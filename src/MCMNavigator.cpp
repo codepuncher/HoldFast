@@ -54,6 +54,11 @@ namespace MCMNavigator
 		// Set once CacheModListFromPapyrus succeeds — prevents repeated VM lookups.
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::atomic<bool> g_skyUICacheDone{ false };
+		// Set once EnsureCachePopulated successfully schedules CacheModListFromPapyrus.
+		// Prevents the every-frame settings UI call from re-scheduling on each retry failure.
+		// TryCacheFromOpenMCM uses g_cachePending for its own debounce and handles retries.
+		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+		inline std::atomic<bool> g_papyrusEagerScheduled{ false };
 
 		RE::GFxMovieView* GetJournalView()
 		{
@@ -453,12 +458,12 @@ namespace MCMNavigator
 		if (g_skyUICacheDone) {
 			return;
 		}
-		if (g_cachePending.exchange(true)) {
+		if (g_papyrusEagerScheduled.exchange(true)) {
 			return;
 		}
 		const auto* taskIface = SKSE::GetTaskInterface();
 		if (!taskIface) {
-			g_cachePending = false;
+			g_papyrusEagerScheduled = false;
 			return;
 		}
 		taskIface->AddTask(CacheModListFromPapyrus);
