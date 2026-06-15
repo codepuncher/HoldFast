@@ -407,6 +407,9 @@ namespace MCMNavigator
 
 	void CacheModListFromPapyrus()
 	{
+		if (g_skyUICacheDone) {
+			return;
+		}
 		// Always clear g_cachePending on exit — needed when called via EnsureCachePopulated's
 		// AddTask dispatch. Harmless double-clear when called from TryCacheFromOpenMCM's lambda.
 		struct ClearPending
