@@ -361,6 +361,9 @@ namespace MCMNavigator
 
 		if (IsModAlreadyOpen(modName)) {
 			g_lock = false;
+		} else if (!SKSE::GetTaskInterface()) {
+			logger::warn("MCMNavigator: task interface unavailable — navigation cancelled");
+			g_lock = false;
 		} else {
 			DelayCallForUI(OpenMod, kModRetryFrames);
 		}
