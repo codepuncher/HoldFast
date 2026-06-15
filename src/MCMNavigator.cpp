@@ -11,7 +11,7 @@ namespace MCMNavigator
 	namespace
 	{
 		constexpr int kMaxRetries = 20;
-		constexpr int kModDelayMs = 50;
+		constexpr int kModRetryFrames = 3;  // ~50ms at 60fps; enough for MCM list to finish animating
 
 		constexpr auto kConfigPanel = "_root.ConfigPanelFader.configPanel.";
 		constexpr auto kModListPanel = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel.";
@@ -80,12 +80,15 @@ namespace MCMNavigator
 			taskIface->AddUITask(std::move(func));
 		}
 
-		void DelayCallForUI(std::function<void()> func, int delayMs)
+		void DelayCallForUI(std::function<void()> func, int framesLeft)
 		{
-			std::thread([f = std::move(func), delayMs]() mutable {
-				std::this_thread::sleep_for(std::chrono::milliseconds(delayMs));
-				AddUITask(std::move(f));
-			}).detach();
+			if (framesLeft <= 0) {
+				AddUITask(std::move(func));
+				return;
+			}
+			AddUITask([func = std::move(func), framesLeft]() mutable {
+				DelayCallForUI(std::move(func), framesLeft - 1);
+			});
 		}
 
 		std::vector<std::string> CollectEntryNames(RE::GFxMovieView* view, const std::string& listPath, const char* memberName)
@@ -207,7 +210,7 @@ namespace MCMNavigator
 			view->GetVariable(&disabled, disablePath.c_str());
 			if (!disabled.IsBool() || disabled.GetBool()) {
 				g_target.modRetries++;
-				DelayCallForUI(OpenMod, kModDelayMs);
+				DelayCallForUI(OpenMod, kModRetryFrames);
 				return;
 			}
 
@@ -216,7 +219,7 @@ namespace MCMNavigator
 			auto mods = CollectEntryNames(view, std::string{ kModList }, "text");
 			if (mods.empty()) {
 				g_target.modRetries++;
-				DelayCallForUI(OpenMod, kModDelayMs);
+				DelayCallForUI(OpenMod, kModRetryFrames);
 				return;
 			}
 
@@ -348,7 +351,7 @@ namespace MCMNavigator
 		if (IsModAlreadyOpen(modName)) {
 			g_lock = false;
 		} else {
-			DelayCallForUI(OpenMod, kModDelayMs);
+			DelayCallForUI(OpenMod, kModRetryFrames);
 		}
 	}
 
