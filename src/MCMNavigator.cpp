@@ -55,7 +55,7 @@ namespace MCMNavigator
 		inline std::mutex g_cacheMutex{};
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::vector<std::string> g_modCache{};
-		// Debounces cache population AddUITask calls.
+		// Owned by TryCacheFromOpenMCM — debounces its AddUITask so at most one is pending at a time.
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::atomic<bool> g_cachePending{ false };
 		// Set when the Papyrus cache path is done — either successfully populated, SkyUI absent,
@@ -332,6 +332,7 @@ namespace MCMNavigator
 				return;
 			}
 			inner->AddTask(CacheModListFromPapyrus);
+			g_cachePending = false;
 		});
 	}
 
@@ -411,17 +412,6 @@ namespace MCMNavigator
 		if (g_skyUICacheDone) {
 			return;
 		}
-		// Always clear g_cachePending on exit — needed when called via EnsureCachePopulated's
-		// AddTask dispatch. Harmless double-clear when called from TryCacheFromOpenMCM's lambda.
-		struct ClearPending
-		{
-			ClearPending() = default;
-			ClearPending(const ClearPending&) = default;
-			ClearPending(ClearPending&&) = default;
-			ClearPending& operator=(const ClearPending&) = default;
-			ClearPending& operator=(ClearPending&&) = default;
-			~ClearPending() { g_cachePending = false; }
-		} clearPending;
 
 		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 		if (!vm) {
