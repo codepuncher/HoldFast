@@ -79,7 +79,7 @@ jobs:
 
   test:
     needs: [changes, clang-format]
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     if: >-
       always() &&
@@ -131,7 +131,7 @@ jobs:
 
   clang-tidy:
     needs: [changes, clang-format, build, test]
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     if: >-
       always() &&
@@ -195,7 +195,7 @@ jobs:
 
   build:
     needs: [changes, clang-format]
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     if: >-
       always() &&
