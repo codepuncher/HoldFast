@@ -40,7 +40,12 @@ namespace
 			return "None";
 		}
 		const auto trimmed = HoldFast::TrimWhitespace(raw);
-		return trimmed.empty() ? "None" : std::string{ trimmed };
+		if (trimmed.empty()) {
+			return "None";
+		}
+		std::string lower{ trimmed };
+		std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return std::tolower(c); });
+		return lower == "none" ? "None" : std::string{ trimmed };
 	}
 }
 
