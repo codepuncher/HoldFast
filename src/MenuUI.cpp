@@ -163,7 +163,7 @@ namespace
 		}
 
 		for (const auto& opt : cachedMods) {
-			if (ImGuiMCP::Selectable(opt.c_str(), opt == modName)) {
+			if (ImGuiMCP::Selectable(opt.c_str(), HoldFast::CaseInsensitiveEqual(opt, modName))) {
 				modName = opt;
 				changed = true;
 				break;

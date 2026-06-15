@@ -1,6 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
+#include <cctype>
 #include <cmath>
 #include <string_view>
 
@@ -14,6 +16,13 @@ namespace HoldFast
 			return {};
 		}
 		return s.substr(first, s.find_last_not_of(" \t\r\n") - first + 1);
+	}
+
+	[[nodiscard]] inline bool CaseInsensitiveEqual(std::string_view a, std::string_view b)
+	{
+		return std::ranges::equal(
+			a, b,
+			[](unsigned char x, unsigned char y) { return std::tolower(x) == std::tolower(y); });
 	}
 
 	[[nodiscard]] inline float ClampHoldDuration(float value, float defaultVal, float minVal, float maxVal)

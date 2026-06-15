@@ -1,8 +1,8 @@
 #include "PCH.h"
 
 #include "MCMNavigator.h"
+#include "Utils.h"
 
-#include <cctype>
 #include <functional>
 #include <mutex>
 
@@ -22,13 +22,6 @@ namespace MCMNavigator
 			return std::ranges::lexicographical_compare(
 				a, b,
 				[](unsigned char x, unsigned char y) { return std::tolower(x) < std::tolower(y); });
-		}
-
-		bool CaseInsensitiveEqual(std::string_view a, std::string_view b)
-		{
-			return std::ranges::equal(
-				a, b,
-				[](unsigned char x, unsigned char y) { return std::tolower(x) == std::tolower(y); });
 		}
 
 		std::string_view StripModNamePrefix(std::string_view name)
@@ -169,7 +162,7 @@ namespace MCMNavigator
 				if (!nameVal.IsString()) {
 					continue;
 				}
-				if (CaseInsensitiveEqual(targetName, nameVal.GetString())) {
+				if (HoldFast::CaseInsensitiveEqual(targetName, nameVal.GetString())) {
 					index = static_cast<int>(i);
 					break;
 				}
@@ -290,7 +283,7 @@ namespace MCMNavigator
 		RE::GFxValue      titleText;
 		const std::string titlePath = std::string{ kModListPanel } + "_titleText";
 		view->GetVariable(&titleText, titlePath.c_str());
-		return titleText.IsString() && CaseInsensitiveEqual(modName, titleText.GetString());
+		return titleText.IsString() && HoldFast::CaseInsensitiveEqual(modName, titleText.GetString());
 	}
 
 	void CacheModListFromGFx()
