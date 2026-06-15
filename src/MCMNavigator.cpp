@@ -153,7 +153,7 @@ namespace MCMNavigator
 
 			const auto length = entryList.GetArraySize();
 			if (length == 0) {
-				logger::debug("MCMNavigator: {} list is empty — consider increasing delay", varName);
+				logger::debug("MCMNavigator: {} list is empty — consider increasing delay", listPath);
 				return false;
 			}
 
@@ -173,14 +173,14 @@ namespace MCMNavigator
 			}
 
 			if (index < 0) {
-				logger::warn("MCMNavigator: '{}' not found in {} list", targetName, varName);
+				logger::warn("MCMNavigator: '{}' not found in {}", targetName, listPath);
 				return false;
 			}
 
 			std::array<RE::GFxValue, 2> args{ static_cast<double>(index), 0.0 };
 			listObj.Invoke("doSetSelectedIndex", nullptr, args.data(), 2);
 			listObj.Invoke("onItemPress", nullptr, args.data(), 2);
-			logger::debug("MCMNavigator: selected {} '{}' at index {}", varName, targetName, index);
+			logger::debug("MCMNavigator: selected '{}' at index {} in {}", targetName, index, listPath);
 			return true;
 		}
 
