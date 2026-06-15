@@ -50,7 +50,7 @@ namespace MCMNavigator
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::atomic<bool> g_lock{ false };
 
-		// Protected by g_cacheMutex — render thread reads, game thread writes.
+		// Protected by g_cacheMutex — render thread reads, game/UI thread writes.
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::mutex g_cacheMutex{};
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
