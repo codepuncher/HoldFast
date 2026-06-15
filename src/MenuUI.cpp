@@ -142,12 +142,13 @@ namespace
 	{
 		MCMNavigator::EnsureCachePopulated();
 
-		const auto  cachedMods = MCMNavigator::GetCachedModNames();
 		const char* preview = modName.empty() || modName == "None" ? "None" : modName.c_str();
 
 		if (!ImGuiMCP::BeginCombo(modLabel, preview)) {
 			return;
 		}
+
+		const auto cachedMods = MCMNavigator::GetCachedModNames();
 
 		const bool noneSelected = modName.empty() || modName == "None";
 		if (ImGuiMCP::Selectable("None", noneSelected)) {
