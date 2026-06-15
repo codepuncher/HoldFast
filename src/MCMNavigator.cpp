@@ -439,13 +439,13 @@ namespace MCMNavigator
 		const auto handle = policy->GetHandleForObject(
 			static_cast<RE::VMTypeID>(RE::FormType::Quest), quest);
 		if (handle == policy->EmptyHandle()) {
-			logger::info("MCMNavigator: could not get VM handle for SKI_ConfigManagerInstance");
+			logger::debug("MCMNavigator: could not get VM handle for SKI_ConfigManagerInstance");
 			return;
 		}
 
 		RE::BSTSmartPointer<RE::BSScript::Object> managerObj;
 		if (!vm->FindBoundObject(handle, "SKI_ConfigManager", managerObj) || !managerObj) {
-			logger::info("MCMNavigator: SKI_ConfigManager script not yet bound — will retry when MCM opens");
+			logger::debug("MCMNavigator: SKI_ConfigManager script not yet bound — will retry when MCM opens");
 			return;
 		}
 
