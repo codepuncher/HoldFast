@@ -181,6 +181,7 @@ bool InputHandler::ScanInputEvents(RE::InputEvent* const* a_events)
 			if (ProcessButton(btn, bs)) {
 				shouldBlock = true;
 			}
+			break;
 		}
 	}
 
