@@ -128,7 +128,9 @@ namespace MCMNavigator
 			names.reserve(length);
 			for (std::uint32_t i = 0; i < length; i++) {
 				RE::GFxValue entry;
-				entryList.GetElement(i, &entry);
+				if (!entryList.GetElement(i, &entry) || !entry.IsObject()) {
+					continue;
+				}
 				RE::GFxValue nameVal;
 				entry.GetMember(memberName, &nameVal);
 				if (nameVal.IsString()) {
@@ -167,7 +169,9 @@ namespace MCMNavigator
 			int index = -1;
 			for (std::uint32_t i = 0; i < length; i++) {
 				RE::GFxValue entry;
-				entryList.GetElement(i, &entry);
+				if (!entryList.GetElement(i, &entry) || !entry.IsObject()) {
+					continue;
+				}
 				RE::GFxValue nameVal;
 				entry.GetMember(varName, &nameVal);
 				if (!nameVal.IsString()) {
@@ -185,8 +189,13 @@ namespace MCMNavigator
 			}
 
 			std::array<RE::GFxValue, 2> args{ static_cast<double>(index), 0.0 };
-			listObj.Invoke("doSetSelectedIndex", nullptr, args.data(), 2);
-			listObj.Invoke("onItemPress", nullptr, args.data(), 2);
+			const bool                  selectedOk = listObj.Invoke("doSetSelectedIndex", nullptr, args.data(), 2);
+			const bool                  pressOk = listObj.Invoke("onItemPress", nullptr, args.data(), 2);
+			if (!selectedOk || !pressOk) {
+				logger::warn("MCMNavigator: Invoke failed on '{}' (doSetSelectedIndex={}, onItemPress={})",
+					targetName, selectedOk, pressOk);
+				return false;
+			}
 			logger::debug("MCMNavigator: selected '{}' at index {} in {}", targetName, index, listPath);
 			return true;
 		}
@@ -252,6 +261,90 @@ namespace MCMNavigator
 			}
 			g_lock = false;
 		}
+
+		bool IsModAlreadyOpen(std::string_view modName)
+		{
+			if (!IsAnyModOpen()) {
+				return false;
+			}
+			auto* view = GetJournalView();
+			if (!view) {
+				return false;
+			}
+			RE::GFxValue      titleText;
+			const std::string titlePath = std::string{ kModListPanel } + "_titleText";
+			view->GetVariable(&titleText, titlePath.c_str());
+			return titleText.IsString() && HoldFast::CaseInsensitiveEqual(modName, titleText.GetString());
+		}
+
+		void CacheModListFromGFx()
+		{
+			auto* view = GetJournalView();
+			if (!view || !IsMCMOpen()) {
+				return;
+			}
+			auto names = CollectEntryNames(view, std::string{ kModList }, "text");
+			std::ranges::sort(names, CaseInsensitiveLess);
+			if (names.empty()) {
+				return;
+			}
+			std::scoped_lock lock(g_cacheMutex);
+			g_modCache = std::move(names);
+		}
+
+		void NavigateToTargetImpl(const std::string& modName)
+		{
+			if (modName.empty() || modName == "None") {
+				return;
+			}
+
+			if (g_lock.exchange(true)) {
+				logger::debug("MCMNavigator: navigation already in flight — skipping");
+				return;
+			}
+
+			if (IsAnyModOpen() && !IsModAlreadyOpen(modName)) {
+				logger::debug("MCMNavigator: a different mod is open — transitioning to mod list");
+				TransitionToModList();
+			}
+
+			g_target.modName = modName;
+			g_target.deadline = std::chrono::steady_clock::now() + kNavTimeout;
+
+			if (IsModAlreadyOpen(modName)) {
+				g_lock = false;
+			} else if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
+				logger::warn("MCMNavigator: task interface unavailable — navigation cancelled");
+				g_lock = false;
+			}
+		}
+
+		void ReadModArraysIntoCache(const RE::BSTSmartPointer<RE::BSScript::Array>& namesArr)
+		{
+			std::vector<std::string> modNames;
+			modNames.reserve(namesArr->size());
+
+			for (RE::BSScript::Array::size_type i = 0; i < namesArr->size(); ++i) {
+				const auto& nameElem = (*namesArr)[i];
+				if (!nameElem.IsString()) {
+					continue;
+				}
+				const auto modName = nameElem.GetString();
+				if (modName.empty()) {
+					continue;
+				}
+				modNames.emplace_back(StripModNamePrefix(modName));
+			}
+
+			if (modNames.empty()) {
+				return;
+			}
+
+			std::ranges::sort(modNames, CaseInsensitiveLess);
+			std::scoped_lock lock(g_cacheMutex);
+			g_modCache = std::move(modNames);
+			logger::info("MCMNavigator: cached {} mods from SKI_ConfigManager", g_modCache.size());
+		}
 	}
 
 	bool IsMCMOpen()
@@ -276,36 +369,6 @@ namespace MCMNavigator
 		const std::string statePath = std::string{ kModListPanel } + "_state";
 		view->GetVariable(&state, statePath.c_str());
 		return state.IsNumber() && state.GetNumber() == 2.0;
-	}
-
-	bool IsModAlreadyOpen(std::string_view modName)
-	{
-		if (!IsAnyModOpen()) {
-			return false;
-		}
-		auto* view = GetJournalView();
-		if (!view) {
-			return false;
-		}
-		RE::GFxValue      titleText;
-		const std::string titlePath = std::string{ kModListPanel } + "_titleText";
-		view->GetVariable(&titleText, titlePath.c_str());
-		return titleText.IsString() && HoldFast::CaseInsensitiveEqual(modName, titleText.GetString());
-	}
-
-	void CacheModListFromGFx()
-	{
-		auto* view = GetJournalView();
-		if (!view || !IsMCMOpen()) {
-			return;
-		}
-		auto names = CollectEntryNames(view, std::string{ kModList }, "text");
-		std::ranges::sort(names, CaseInsensitiveLess);
-		if (names.empty()) {
-			return;
-		}
-		std::scoped_lock lock(g_cacheMutex);
-		g_modCache = std::move(names);
 	}
 
 	void TryCacheFromOpenMCM()
@@ -352,33 +415,6 @@ namespace MCMNavigator
 		return g_modCache;
 	}
 
-	void NavigateToTargetImpl(const std::string& modName)
-	{
-		if (modName.empty() || modName == "None") {
-			return;
-		}
-
-		if (g_lock.exchange(true)) {
-			logger::debug("MCMNavigator: navigation already in flight — skipping");
-			return;
-		}
-
-		if (IsAnyModOpen() && !IsModAlreadyOpen(modName)) {
-			logger::debug("MCMNavigator: a different mod is open — transitioning to mod list");
-			TransitionToModList();
-		}
-
-		g_target.modName = modName;
-		g_target.deadline = std::chrono::steady_clock::now() + kNavTimeout;
-
-		if (IsModAlreadyOpen(modName)) {
-			g_lock = false;
-		} else if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
-			logger::warn("MCMNavigator: task interface unavailable — navigation cancelled");
-			g_lock = false;
-		}
-	}
-
 	void NavigateToTarget(const std::string& modName) noexcept
 	{
 		try {
@@ -388,42 +424,11 @@ namespace MCMNavigator
 		}
 	}
 
-	void ReadModArraysIntoCache(const RE::BSTSmartPointer<RE::BSScript::Array>& namesArr)
-	{
-		std::vector<std::string> modNames;
-		modNames.reserve(namesArr->size());
-
-		for (RE::BSScript::Array::size_type i = 0; i < namesArr->size(); ++i) {
-			const auto& nameElem = (*namesArr)[i];
-			if (!nameElem.IsString()) {
-				continue;
-			}
-			const auto modName = nameElem.GetString();
-			if (modName.empty()) {
-				continue;
-			}
-			modNames.emplace_back(StripModNamePrefix(modName));
-		}
-
-		if (modNames.empty()) {
-			return;
-		}
-
-		std::ranges::sort(modNames, CaseInsensitiveLess);
-		std::scoped_lock lock(g_cacheMutex);
-		g_modCache = std::move(modNames);
-		logger::info("MCMNavigator: cached {} mods from SKI_ConfigManager", g_modCache.size());
-	}
-
 	void CacheModListFromPapyrus()
 	{
+		// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
 		const struct ClearPapyrusPending
 		{
-			ClearPapyrusPending() = default;
-			ClearPapyrusPending(const ClearPapyrusPending&) = default;
-			ClearPapyrusPending(ClearPapyrusPending&&) = default;
-			ClearPapyrusPending& operator=(const ClearPapyrusPending&) = default;
-			ClearPapyrusPending& operator=(ClearPapyrusPending&&) = default;
 			~ClearPapyrusPending() { g_papyrusPending = false; }
 		} clearPapyrusPending;
 
