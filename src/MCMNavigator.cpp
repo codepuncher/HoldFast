@@ -87,16 +87,21 @@ namespace MCMNavigator
 			return true;
 		}
 
-		bool DelayCallForUI(std::function<void()> func, int framesLeft)
+		bool DelayCallForUI(std::function<void()> func, int gameFramesLeft)
 		{
-			if (framesLeft <= 0) {
+			if (gameFramesLeft <= 0) {
 				return AddUITask(std::move(func));
 			}
-			return AddUITask([func = std::move(func), framesLeft]() mutable {
-				if (!DelayCallForUI(std::move(func), framesLeft - 1)) {
+			const auto* taskIface = SKSE::GetTaskInterface();
+			if (!taskIface) {
+				return false;
+			}
+			taskIface->AddTask([func = std::move(func), gameFramesLeft]() mutable {
+				if (!DelayCallForUI(std::move(func), gameFramesLeft - 1)) {
 					g_lock = false;
 				}
 			});
+			return true;
 		}
 
 		std::vector<std::string> CollectEntryNames(RE::GFxMovieView* view, const std::string& listPath, const char* memberName)
