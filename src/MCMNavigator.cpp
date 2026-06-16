@@ -495,7 +495,8 @@ namespace MCMNavigator
 			g_papyrusEagerScheduled = false;
 			return;
 		}
-		g_papyrusPending = true;
-		taskIface->AddTask(CacheModListFromPapyrus);
+		if (!g_papyrusPending.exchange(true)) {
+			taskIface->AddTask(CacheModListFromPapyrus);
+		}
 	}
 }
