@@ -1,12 +1,14 @@
 #include "PCH.h"
 
 #include "InputHandler.h"
+#include "MCMNavigator.h"
 #include "MenuUI.h"
 
 namespace
 {
 	constexpr auto kGfxCurrentTab = "_root.QuestJournalFader.Menu_mc.iCurrentTab";
 	constexpr auto kGfxRestoreSavedSettings = "_root.QuestJournalFader.Menu_mc.RestoreSavedSettings";
+	constexpr auto kGfxConfigPanelOpen = "_root.QuestJournalFader.Menu_mc.ConfigPanelOpen";
 	constexpr auto kGfxSwitchPageToFront = "_root.QuestJournalFader.Menu_mc.SwitchPageToFront";
 	constexpr auto kGfxQJOEndPage = "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc.QJO_EndPage";
 	constexpr auto kBestiaryMenuName = "BestiaryMenu";
@@ -95,13 +97,11 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
-	// Journal closed. _lastKnownTab was last written by the input snapshot (GameIsPaused
-	// block) which runs on every input while the journal is open — including the button
-	// press that triggers close. No reliable data is available here (uiMovie is null and
-	// sJournalTabIdx is always kSystem due to QJO's Hook_ProcessMessage).
+	// Journal closed.
 	if (_tabRestorePending) {
 		RestoreJournalTab();
 	}
+	ResetMCMQuickexitState();
 	UpdateShortPressBinding();
 	return RE::BSEventNotifyControl::kContinue;
 }
@@ -144,6 +144,8 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 	if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(kCharacterSheetMenuName))) {
 		if (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {
 			SnapshotJournalTab(ui);
+			MCMNavigator::TryCacheFromOpenMCM();
+			HandleMCMQuickexit();
 		}
 		for (auto& bs : _buttons) {
 			bs.pressTime.reset();
@@ -222,12 +224,13 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 
 	if (state.action == LongPressAction::kNewSave) {
 		logger::info("{}: dispatching NewSave", logCtx);
-		if (auto* saveLoadManager = RE::BGSSaveLoadManager::GetSingleton()) {
-			RE::SendHUDMessage::ShowHUDMessage("Saving...");
-			saveLoadManager->Save(nullptr);
+		auto* saveLoadManager = RE::BGSSaveLoadManager::GetSingleton();
+		if (!saveLoadManager) {
+			logger::error("{}: BGSSaveLoadManager unavailable — action not dispatched", logCtx);
 			return;
 		}
-		logger::error("{}: BGSSaveLoadManager unavailable — action not dispatched", logCtx);
+		RE::SendHUDMessage::ShowHUDMessage("Saving...");
+		saveLoadManager->Save(nullptr);
 		return;
 	}
 
@@ -268,6 +271,7 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 	case LongPressAction::kQuests:
 	case LongPressAction::kSystem:
 	case LongPressAction::kStats:
+	case LongPressAction::kMCM:
 		{
 			logger::info("{}: opening Journal", logCtx);
 			JournalTab targetTab = JournalTab::kQuest;
@@ -275,6 +279,12 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 				targetTab = JournalTab::kSystem;
 			} else if (state.action == LongPressAction::kStats) {
 				targetTab = JournalTab::kStats;
+			} else if (state.action == LongPressAction::kMCM) {
+				targetTab = JournalTab::kMCM;
+				_pendingMCMModName = state.mcmModName;
+				_mcmQuickexit = state.mcmQuickexit;
+				_mcmWasOpen = false;
+				_mcmModPageSeen = false;
 			}
 			OpenJournalOnTab(targetTab, state.name);
 			if (!DispatchViaMenuOpenHandler(userEvents->journal, state.keyCode, logCtx)) {
@@ -283,8 +293,9 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 			}
 			// Re-write target tab after menuOpenHandler->ProcessButton() resets sJournalTabIdx internally.
 			// AddMessage is queued for the next frame so the Journal will read our value.
+			// For kMCM, write kSystem (2) — MCM is accessed via the System tab.
 			if (sJournalTabIdx.get()) {
-				*sJournalTabIdx = static_cast<std::uint32_t>(targetTab);
+				*sJournalTabIdx = JournalTabToIndex(targetTab);
 			}
 			return;
 		}
@@ -373,9 +384,27 @@ bool InputHandler::DispatchViaHandler(
 	return true;
 }
 
+std::uint32_t InputHandler::JournalTabToIndex(JournalTab tab)
+{
+	return tab == JournalTab::kMCM ?
+	           static_cast<std::uint32_t>(JournalTab::kSystem) :
+	           static_cast<std::uint32_t>(tab);
+}
+
+void InputHandler::CloseJournal()
+{
+	auto* uiQueue = RE::UIMessageQueue::GetSingleton();
+	if (!uiQueue) {
+		return;
+	}
+	uiQueue->AddMessage(RE::JournalMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+}
+
 void InputHandler::OpenJournalOnTab(JournalTab tab, const std::string& buttonName)
 {
 	_pendingTab = tab;
+
+	const auto sJournalValue = JournalTabToIndex(tab);
 
 	if (!sJournalTabIdx.get()) {
 		// sJournalTabIdx unavailable — skip write/restore bookkeeping for the relocation,
@@ -390,7 +419,7 @@ void InputHandler::OpenJournalOnTab(JournalTab tab, const std::string& buttonNam
 		_savedTabIdx = static_cast<JournalTab>(*sJournalTabIdx);
 	}
 	_tabRestorePending = true;
-	*sJournalTabIdx = static_cast<std::uint32_t>(tab);
+	*sJournalTabIdx = sJournalValue;
 }
 
 void InputHandler::RestoreJournalTab()
@@ -400,6 +429,7 @@ void InputHandler::RestoreJournalTab()
 	}
 	_tabRestorePending = false;
 	_pendingTab.reset();
+	ResetMCMQuickexitState();
 }
 
 void InputHandler::SnapshotJournalTab(RE::UI* ui)
@@ -442,7 +472,7 @@ void InputHandler::SnapshotJournalTab(RE::UI* ui)
 
 void InputHandler::InvokeScaleformTab(JournalTab tab)
 {
-	const auto tabIdx = static_cast<std::uint32_t>(tab);
+	const auto tabIdx = JournalTabToIndex(tab);
 
 	auto* ui = RE::UI::GetSingleton();
 	if (!ui) {
@@ -485,6 +515,29 @@ void InputHandler::InvokeScaleformTab(JournalTab tab)
 		kGfxRestoreSavedSettings,
 		nullptr, args.data(), static_cast<std::uint32_t>(args.size()));
 	logger::info("Journal long press: RestoreSavedSettings({}) {}", tabIdx, ok ? "ok" : "FAIL");
+
+	if (tab != JournalTab::kMCM) {
+		return;
+	}
+
+	const bool cpOk = journal->uiMovie->Invoke(kGfxConfigPanelOpen, nullptr, nullptr, 0);
+	if (!cpOk) {
+		logger::info("Journal long press: ConfigPanelOpen not found — SkyUI may not be installed");
+		return;
+	}
+
+	if (_pendingMCMModName.empty() || _pendingMCMModName == "None") {
+		return;
+	}
+	const auto* taskIface = SKSE::GetTaskInterface();
+	if (!taskIface) {
+		return;
+	}
+	std::string modName = std::move(_pendingMCMModName);
+	_pendingMCMModName.clear();
+	taskIface->AddUITask([mn = std::move(modName)]() noexcept {
+		MCMNavigator::NavigateToTarget(mn);
+	});
 }
 
 void InputHandler::InvokeRestoreTabIfNeeded(JournalTab tab)
@@ -547,6 +600,46 @@ void InputHandler::DetectQJOIfNeeded(RE::GFxMovieView* movie)
 	const bool   found = movie->GetVariable(&result, kGfxQJOEndPage);
 	_qjoInstalled = found && result.GetType() != RE::GFxValue::ValueType::kUndefined;
 	logger::info("QJO detection: {}", *_qjoInstalled ? "QJO installed" : "vanilla Journal");
+}
+
+void InputHandler::ResetMCMQuickexitState()
+{
+	_mcmQuickexit = false;
+	_mcmWasOpen = false;
+	_mcmModPageSeen = false;
+}
+
+void InputHandler::HandleMCMQuickexit()
+{
+	if (!_mcmQuickexit) {
+		return;
+	}
+
+	if (!_mcmWasOpen) {
+		_mcmWasOpen = MCMNavigator::IsMCMOpen();
+		return;
+	}
+
+	const bool modOpen = MCMNavigator::IsAnyModOpen();
+
+	if (!_mcmModPageSeen) {
+		if (modOpen) {
+			_mcmModPageSeen = true;
+			return;
+		}
+		if (MCMNavigator::IsMCMOpen()) {
+			return;
+		}
+		ResetMCMQuickexitState();
+		CloseJournal();
+		return;
+	}
+
+	if (modOpen) {
+		return;
+	}
+	ResetMCMQuickexitState();
+	CloseJournal();
 }
 
 void InputHandler::DispatchShortPress(const ButtonState& state, float held)

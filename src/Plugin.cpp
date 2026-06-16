@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include "InputHandler.h"
+#include "MCMNavigator.h"
 #include "MenuUI.h"
 
 void SetupLog()
@@ -93,6 +94,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 			case SKSE::MessagingInterface::kPostLoadGame:
 			case SKSE::MessagingInterface::kNewGame:
 				InputHandler::GetSingleton()->UpdateShortPressBinding();
+				MCMNavigator::EnsureCachePopulated();
 				break;
 			default:
 				break;

@@ -75,11 +75,21 @@ TEST_CASE("ParseAction supports favourites alias and invalid fallback", "[config
 	CHECK(ParseAction("  None  ") == Action::kNone);
 }
 
+TEST_CASE("ParseAction handles MCM action", "[config]")
+{
+	using Action = LongPressAction;
+
+	CHECK(ParseAction("MCM") == Action::kMCM);
+	CHECK(ParseAction("mcm") == Action::kMCM);
+	CHECK(ParseAction("  Mcm  ") == Action::kMCM);
+}
+
 TEST_CASE("ActionName maps enum values and falls back to None", "[config]")
 {
 	using Action = LongPressAction;
 
 	CHECK(ActionName(Action::kMap) == "Map");
+	CHECK(ActionName(Action::kMCM) == "MCM");
 	CHECK(ActionName(Action::kQuickSave) == "QuickSave");
 	CHECK(ActionName(Action::kCharacterSheet) == "CharacterSheet");
 	CHECK(ActionName(static_cast<Action>(9999)) == "None");

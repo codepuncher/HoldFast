@@ -55,6 +55,9 @@ private:
 		kQuest = 0,
 		kStats = 1,
 		kSystem = 2,
+		// Sentinel: opens Journal on the System tab then navigates to the MCM overlay.
+		// Not a real sJournalTabIdx value — kSystem (2) is written to the relocation.
+		kMCM = 3,
 	};
 	static inline REL::Relocation<std::uint32_t*> sJournalTabIdx{ RELOCATION_ID(520167, 406697) };
 
@@ -65,20 +68,24 @@ private:
 		bool                                                 triggered{ false };
 	};
 
-	bool        ScanInputEvents(RE::InputEvent* const* a_events);
-	bool        ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
-	static bool DispatchViaMenuOpenHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static bool DispatchViaQuickSaveLoadHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static bool DispatchViaFavoritesHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static bool DispatchViaHandler(RE::MenuEventHandler* handler, std::string_view handlerName, const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static void DispatchShortPress(const ButtonState& state, float held);
-	void        DispatchLongPress(const ButtonState& state);
-	void        OpenJournalOnTab(JournalTab tab, const std::string& buttonName);
-	void        RestoreJournalTab();
-	static void InvokeScaleformTab(JournalTab tab);
-	void        InvokeRestoreTabIfNeeded(JournalTab tab);
-	void        SnapshotJournalTab(RE::UI* ui);
-	void        DetectQJOIfNeeded(RE::GFxMovieView* movie);
+	bool                 ScanInputEvents(RE::InputEvent* const* a_events);
+	bool                 ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
+	static bool          DispatchViaMenuOpenHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool          DispatchViaQuickSaveLoadHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool          DispatchViaFavoritesHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool          DispatchViaHandler(RE::MenuEventHandler* handler, std::string_view handlerName, const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static void          DispatchShortPress(const ButtonState& state, float held);
+	static std::uint32_t JournalTabToIndex(JournalTab tab);
+	static void          CloseJournal();
+	void                 DispatchLongPress(const ButtonState& state);
+	void                 OpenJournalOnTab(JournalTab tab, const std::string& buttonName);
+	void                 RestoreJournalTab();
+	void                 InvokeScaleformTab(JournalTab tab);
+	void                 InvokeRestoreTabIfNeeded(JournalTab tab);
+	void                 SnapshotJournalTab(RE::UI* ui);
+	void                 DetectQJOIfNeeded(RE::GFxMovieView* movie);
+	void                 HandleMCMQuickexit();
+	void                 ResetMCMQuickexitState();
 
 	float                    holdDuration{ kDefaultHoldDuration };
 	std::vector<ButtonState> _buttons;
@@ -99,4 +106,8 @@ private:
 	std::optional<JournalTab> _pendingTab{};
 	std::optional<JournalTab> _lastKnownTab{};
 	std::optional<bool>       _qjoInstalled{};
+	std::string               _pendingMCMModName;
+	bool                      _mcmQuickexit{ false };
+	bool                      _mcmWasOpen{ false };
+	bool                      _mcmModPageSeen{ false };
 };

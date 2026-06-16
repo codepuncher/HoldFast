@@ -32,6 +32,21 @@ namespace
 		logger::warn("fHoldDuration ({:.2f}) exceeds maximum {:.1f} — capping", raw, HoldFast::kMaxHoldDuration);
 		return duration;
 	}
+
+	[[nodiscard]] std::string GetMCMTarget(const CSimpleIniA& ini, const char* modKey)
+	{
+		const char* raw = ini.GetValue("General", modKey, nullptr);
+		if (!raw) {
+			return "None";
+		}
+		const auto trimmed = HoldFast::TrimWhitespace(raw);
+		if (trimmed.empty()) {
+			return "None";
+		}
+		std::string lower{ trimmed };
+		std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		return lower == "none" ? "None" : std::string{ trimmed };
+	}
 }
 
 HoldFast::Config::Settings HoldFast::Config::LoadSettings()
@@ -56,6 +71,8 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 		return settings;
 	}
 
+	constexpr auto kValidActions = "Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None";
+
 	settings.startAction = hasStart ? ParseAction(rawStart) : LongPressAction::kNone;
 	if (hasStart && settings.startAction == LongPressAction::kNone) {
 		std::string lower{ HoldFast::TrimWhitespace(rawStart) };
@@ -63,7 +80,7 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 		}
 		if (lower != "none") {
-			logger::warn("sButtonStartAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawStart);
+			logger::warn("sButtonStartAction='{}' is not a recognised action (valid: {}) — disabling button", rawStart, kValidActions);
 		}
 	}
 	settings.backAction = hasBack ? ParseAction(rawBack) : LongPressAction::kNone;
@@ -73,9 +90,15 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 		}
 		if (lower != "none") {
-			logger::warn("sButtonBackAction='{}' is not a recognised action (valid: Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None) — disabling button", rawBack);
+			logger::warn("sButtonBackAction='{}' is not a recognised action (valid: {}) — disabling button", rawBack, kValidActions);
 		}
 	}
+
+	settings.startMCMModName = GetMCMTarget(ini, "sButtonStartMCMModName");
+	settings.backMCMModName = GetMCMTarget(ini, "sButtonBackMCMModName");
+	settings.startMCMQuickexit = ini.GetBoolValue("General", "bButtonStartMCMQuickexit", true);
+	settings.backMCMQuickexit = ini.GetBoolValue("General", "bButtonBackMCMQuickexit", true);
+
 	return settings;
 }
 
@@ -92,6 +115,10 @@ bool HoldFast::Config::SaveSettings(const Settings& settings)
 	ini.SetValue("General", "fHoldDuration", holdDurationStr.c_str());
 	ini.SetValue("General", "sButtonStartAction", startActionName.c_str());
 	ini.SetValue("General", "sButtonBackAction", backActionName.c_str());
+	ini.SetValue("General", "sButtonStartMCMModName", settings.startMCMModName.c_str());
+	ini.SetValue("General", "sButtonBackMCMModName", settings.backMCMModName.c_str());
+	ini.SetBoolValue("General", "bButtonStartMCMQuickexit", settings.startMCMQuickexit);
+	ini.SetBoolValue("General", "bButtonBackMCMQuickexit", settings.backMCMQuickexit);
 
 	const auto rc = ini.SaveFile(kIniPath);
 	if (rc < SI_OK) {
@@ -107,10 +134,22 @@ std::vector<ButtonConfig> HoldFast::Config::BuildButtons(const Settings& setting
 
 	std::vector<ButtonConfig> buttons;
 	if (settings.startAction != LongPressAction::kNone) {
-		buttons.push_back({ .keyCode = static_cast<std::uint32_t>(Key::kStart), .name = "Start", .action = settings.startAction });
+		buttons.push_back({
+			.keyCode = static_cast<std::uint32_t>(Key::kStart),
+			.name = "Start",
+			.action = settings.startAction,
+			.mcmModName = settings.startMCMModName,
+			.mcmQuickexit = settings.startMCMQuickexit,
+		});
 	}
 	if (settings.backAction != LongPressAction::kNone) {
-		buttons.push_back({ .keyCode = static_cast<std::uint32_t>(Key::kBack), .name = "Back", .action = settings.backAction });
+		buttons.push_back({
+			.keyCode = static_cast<std::uint32_t>(Key::kBack),
+			.name = "Back",
+			.action = settings.backAction,
+			.mcmModName = settings.backMCMModName,
+			.mcmQuickexit = settings.backMCMQuickexit,
+		});
 	}
 	return buttons;
 }

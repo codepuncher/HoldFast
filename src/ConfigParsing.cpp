@@ -21,6 +21,7 @@ LongPressAction HoldFast::Config::ParseAction(std::string_view raw)
 		{ "quicksave", LongPressAction::kQuickSave },
 		{ "bestiary", LongPressAction::kBestiary },
 		{ "charactersheet", LongPressAction::kCharacterSheet },
+		{ "mcm", LongPressAction::kMCM },
 		{ "none", LongPressAction::kNone },
 	};
 

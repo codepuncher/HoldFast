@@ -42,11 +42,19 @@ Edit `Data\SKSE\Plugins\HoldFast.ini`:
 ; Duration in seconds a button must be held to trigger its long-press action (default: 0.5, max: 5.0)
 fHoldDuration=0.5
 ; Long-press action for the Start (Menu) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None (case-insensitive)
 sButtonStartAction=Map
+; Mod to open when sButtonStartAction=MCM. Leave as None to open the MCM mod list.
+sButtonStartMCMModName=None
+; Close the journal automatically when leaving a MCM mod page via Start. Only applies when sButtonStartAction=MCM.
+bButtonStartMCMQuickexit=true
 ; Long-press action for the Back (View) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None (case-insensitive)
 sButtonBackAction=System
+; Mod to open when sButtonBackAction=MCM. Leave as None to open the MCM mod list.
+sButtonBackMCMModName=None
+; Close the journal automatically when leaving a MCM mod page via Back. Only applies when sButtonBackAction=MCM.
+bButtonBackMCMQuickexit=true
 ```
 
 **In-game settings (optional):**
@@ -56,22 +64,23 @@ Use **Save to config** to persist and apply changes, **Reload from config** to d
 
 **Valid actions:**
 
-| Value            | What it does                                   |
-| ---------------- | ---------------------------------------------- |
-| `Map`            | Opens the map                                  |
-| `System`         | Opens the Journal on the System tab            |
-| `Quests`         | Opens the Journal on the Quests tab            |
-| `Stats`          | Opens the Journal on the Stats tab             |
-| `Inventory`      | Opens the inventory                            |
-| `Magic`          | Opens the magic menu                           |
-| `Favorites`      | Opens the favourites menu                      |
-| `TweenMenu`      | Opens the tween menu (Items/Magic/Map/Skills)  |
-| `Wait`           | Opens the sleep/wait menu                      |
-| `NewSave`        | Performs a new save                            |
-| `QuickSave`      | Performs a quicksave                           |
-| `Bestiary`       | Opens The Dragonborn's Bestiary (requires mod) |
-| `CharacterSheet` | Opens Character Menu SE (requires mod)         |
-| `None`           | Button not intercepted                         |
+| Value            | What it does                                                  |
+| ---------------- | ------------------------------------------------------------- |
+| `Map`            | Opens the map                                                 |
+| `System`         | Opens the Journal on the System tab                           |
+| `Quests`         | Opens the Journal on the Quests tab                           |
+| `Stats`          | Opens the Journal on the Stats tab                            |
+| `Inventory`      | Opens the inventory                                           |
+| `Magic`          | Opens the magic menu                                          |
+| `Favorites`      | Opens the favourites menu                                     |
+| `TweenMenu`      | Opens the tween menu (Items/Magic/Map/Skills)                 |
+| `Wait`           | Opens the sleep/wait menu                                     |
+| `NewSave`        | Performs a new save                                           |
+| `QuickSave`      | Performs a quicksave                                          |
+| `Bestiary`       | Opens The Dragonborn's Bestiary (requires mod)                |
+| `CharacterSheet` | Opens Character Menu SE (requires mod)                        |
+| `MCM`            | Opens the MCM. Optionally navigates to a specific mod's page. |
+| `None`           | Button not intercepted                                        |
 
 Logs are written to:
 
