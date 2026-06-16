@@ -184,7 +184,7 @@ namespace
 				"Start MCM mod name",
 				state.stagedSettings.startMCMModName,
 				changed);
-			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM##start", &state.stagedSettings.startMCMQuickexit);
+			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##start", &state.stagedSettings.startMCMQuickexit);
 		}
 		changed |= DrawActionCombo("Back long-press action", state.stagedSettings.backAction);
 		if (state.stagedSettings.backAction == InputHandler::LongPressAction::kMCM) {
@@ -192,7 +192,7 @@ namespace
 				"Back MCM mod name",
 				state.stagedSettings.backMCMModName,
 				changed);
-			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM##back", &state.stagedSettings.backMCMQuickexit);
+			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##back", &state.stagedSettings.backMCMQuickexit);
 		}
 
 		if (changed) {
