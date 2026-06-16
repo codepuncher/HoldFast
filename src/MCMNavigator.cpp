@@ -3,6 +3,7 @@
 #include "MCMNavigator.h"
 #include "Utils.h"
 
+#include <chrono>
 #include <functional>
 #include <mutex>
 
@@ -10,8 +11,8 @@ namespace MCMNavigator
 {
 	namespace
 	{
-		constexpr int kMaxRetries = 20;
-		constexpr int kModRetryFrames = 3;  // ~50ms at 60fps; enough for MCM list to finish animating
+		constexpr int  kModRetryFrames = 3;
+		constexpr auto kNavTimeout = std::chrono::seconds(3);
 
 		constexpr auto kConfigPanel = "_root.ConfigPanelFader.configPanel.";
 		constexpr auto kModListPanel = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel.";
@@ -32,8 +33,8 @@ namespace MCMNavigator
 
 		struct NavigationTarget
 		{
-			std::string modName;
-			int         modRetries{ 0 };
+			std::string                           modName;
+			std::chrono::steady_clock::time_point deadline;
 		};
 
 		// Set once per dispatch, consumed by the async chain.
@@ -203,9 +204,8 @@ namespace MCMNavigator
 
 		void OpenMod()
 		{
-			if (g_target.modRetries >= kMaxRetries) {
-				logger::warn("MCMNavigator: mod selection retry limit reached");
-				g_target.modRetries = 0;
+			if (std::chrono::steady_clock::now() > g_target.deadline) {
+				logger::warn("MCMNavigator: mod selection timed out waiting for MCM to be ready");
 				g_lock = false;
 				return;
 			}
@@ -222,7 +222,6 @@ namespace MCMNavigator
 			const std::string disablePath = std::string{ kModList } + "disableSelection";
 			view->GetVariable(&disabled, disablePath.c_str());
 			if (!disabled.IsBool() || disabled.GetBool()) {
-				g_target.modRetries++;
 				if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
 					g_lock = false;
 				}
@@ -233,7 +232,6 @@ namespace MCMNavigator
 			// populated the data yet. Retry until we have at least one entry.
 			auto mods = CollectEntryNames(view, std::string{ kModList }, "text");
 			if (mods.empty()) {
-				g_target.modRetries++;
 				if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
 					g_lock = false;
 				}
@@ -249,7 +247,6 @@ namespace MCMNavigator
 				}
 			}
 
-			g_target.modRetries = 0;
 			if (!SelectEntryByName(kModList, "text", g_target.modName)) {
 				logger::warn("MCMNavigator: mod '{}' not found — MCM mod list shown", g_target.modName);
 			}
@@ -372,7 +369,7 @@ namespace MCMNavigator
 		}
 
 		g_target.modName = modName;
-		g_target.modRetries = 0;
+		g_target.deadline = std::chrono::steady_clock::now() + kNavTimeout;
 
 		if (IsModAlreadyOpen(modName)) {
 			g_lock = false;
