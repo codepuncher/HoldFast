@@ -175,40 +175,44 @@ namespace
 
 	void __stdcall RenderSettings()
 	{
-		auto& state = GetMenuState();
-		bool  changed = false;
-		changed |= ImGuiMCP::SliderFloat("Hold duration", &state.stagedSettings.holdDuration, InputHandler::kMinHoldDuration, InputHandler::kMaxHoldDuration, "%.2fs");
-		changed |= DrawActionCombo("Start long-press action", state.stagedSettings.startAction);
-		if (state.stagedSettings.startAction == InputHandler::LongPressAction::kMCM) {
-			DrawMCMTargetInputs(
-				"Start MCM mod name",
-				state.stagedSettings.startMCMModName,
-				changed);
-			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##start", &state.stagedSettings.startMCMQuickexit);
-		}
-		changed |= DrawActionCombo("Back long-press action", state.stagedSettings.backAction);
-		if (state.stagedSettings.backAction == InputHandler::LongPressAction::kMCM) {
-			DrawMCMTargetInputs(
-				"Back MCM mod name",
-				state.stagedSettings.backMCMModName,
-				changed);
-			changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##back", &state.stagedSettings.backMCMQuickexit);
-		}
+		try {
+			auto& state = GetMenuState();
+			bool  changed = false;
+			changed |= ImGuiMCP::SliderFloat("Hold duration", &state.stagedSettings.holdDuration, InputHandler::kMinHoldDuration, InputHandler::kMaxHoldDuration, "%.2fs");
+			changed |= DrawActionCombo("Start long-press action", state.stagedSettings.startAction);
+			if (state.stagedSettings.startAction == InputHandler::LongPressAction::kMCM) {
+				DrawMCMTargetInputs(
+					"Start MCM mod name",
+					state.stagedSettings.startMCMModName,
+					changed);
+				changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##start", &state.stagedSettings.startMCMQuickexit);
+			}
+			changed |= DrawActionCombo("Back long-press action", state.stagedSettings.backAction);
+			if (state.stagedSettings.backAction == InputHandler::LongPressAction::kMCM) {
+				DrawMCMTargetInputs(
+					"Back MCM mod name",
+					state.stagedSettings.backMCMModName,
+					changed);
+				changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##back", &state.stagedSettings.backMCMQuickexit);
+			}
 
-		if (changed) {
-			state.hasPendingChanges = true;
-		}
+			if (changed) {
+				state.hasPendingChanges = true;
+			}
 
-		if (ImGuiMCP::Button("Save to config")) {
-			SavePendingChanges();
-		}
-		ImGuiMCP::SameLine();
-		if (ImGuiMCP::Button("Reload from config")) {
-			ReloadFromConfig(true);
-		}
-		ImGuiMCP::SameLine();
-		if (ImGuiMCP::Button("Reset to defaults")) {
-			ResetToDefaults();
+			if (ImGuiMCP::Button("Save to config")) {
+				SavePendingChanges();
+			}
+			ImGuiMCP::SameLine();
+			if (ImGuiMCP::Button("Reload from config")) {
+				ReloadFromConfig(true);
+			}
+			ImGuiMCP::SameLine();
+			if (ImGuiMCP::Button("Reset to defaults")) {
+				ResetToDefaults();
+			}
+		} catch (...) {
+			logger::error("RenderSettings: unhandled exception — skipping UI frame");
 		}
 	}
 
