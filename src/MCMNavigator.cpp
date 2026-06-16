@@ -60,6 +60,11 @@ namespace MCMNavigator
 		// TryCacheFromOpenMCM uses g_cachePending for its own debounce and handles retries.
 		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
 		inline std::atomic<bool> g_papyrusEagerScheduled{ false };
+		// Set while a CacheModListFromPapyrus game-thread task is pending.
+		// Prevents TryCacheFromOpenMCM from flooding the game-task queue when
+		// SKI_ConfigManager is not yet bound.
+		// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables)
+		inline std::atomic<bool> g_papyrusPending{ false };
 
 		RE::GFxMovieView* GetJournalView()
 		{
@@ -330,6 +335,10 @@ namespace MCMNavigator
 				g_cachePending = false;
 				return;
 			}
+			if (g_papyrusPending.exchange(true)) {
+				g_cachePending = false;
+				return;
+			}
 			inner->AddTask(CacheModListFromPapyrus);
 			g_cachePending = false;
 		});
@@ -409,6 +418,7 @@ namespace MCMNavigator
 		if (g_skyUICacheDone) {
 			return;
 		}
+		g_papyrusPending = false;
 
 		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 		if (!vm) {
