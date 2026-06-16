@@ -27,6 +27,7 @@ enum class LongPressAction
 	kBestiary,
 	kCharacterSheet,
 	kMCM,
+	kCount,
 };
 
 struct ButtonConfig

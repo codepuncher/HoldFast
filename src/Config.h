@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -44,6 +45,8 @@ namespace HoldFast::Config
 		{ "MCM", LongPressAction::kMCM },
 		{ "None", LongPressAction::kNone },
 	} };
+	static_assert(kActionOptions.size() == static_cast<std::size_t>(LongPressAction::kCount),
+		"kActionOptions is out of sync with LongPressAction enum — add the missing entry");
 
 	[[nodiscard]] Settings LoadSettings();
 	[[nodiscard]] bool     SaveSettings(const Settings& settings);

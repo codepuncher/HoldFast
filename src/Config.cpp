@@ -99,6 +99,15 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 	settings.startMCMQuickexit = ini.GetBoolValue("General", "bButtonStartMCMQuickexit", true);
 	settings.backMCMQuickexit = ini.GetBoolValue("General", "bButtonBackMCMQuickexit", true);
 
+	if (settings.startAction == LongPressAction::kMCM &&
+		HoldFast::CaseInsensitiveEqual(settings.startMCMModName, "None")) {
+		logger::warn("sButtonStartAction=MCM but sButtonStartMCMModName is not set — Start button will open MCM without navigating to a specific mod");
+	}
+	if (settings.backAction == LongPressAction::kMCM &&
+		HoldFast::CaseInsensitiveEqual(settings.backMCMModName, "None")) {
+		logger::warn("sButtonBackAction=MCM but sButtonBackMCMModName is not set — Back button will open MCM without navigating to a specific mod");
+	}
+
 	return settings;
 }
 
@@ -106,7 +115,10 @@ bool HoldFast::Config::SaveSettings(const Settings& settings)
 {
 	CSimpleIniA ini;
 	ini.SetSpaces(false);
-	ini.LoadFile(kIniPath);
+	const auto loadRc = ini.LoadFile(kIniPath);
+	if (loadRc < SI_OK && loadRc != SI_FILE) {
+		logger::warn("SaveSettings: failed to parse existing HoldFast.ini (rc={}) — existing content may be lost", static_cast<int>(loadRc));
+	}
 
 	const auto startActionName = std::string{ ActionName(settings.startAction) };
 	const auto backActionName = std::string{ ActionName(settings.backAction) };
