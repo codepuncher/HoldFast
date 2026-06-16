@@ -415,10 +415,19 @@ namespace MCMNavigator
 
 	void CacheModListFromPapyrus()
 	{
+		const struct ClearPapyrusPending
+		{
+			ClearPapyrusPending() = default;
+			ClearPapyrusPending(const ClearPapyrusPending&) = default;
+			ClearPapyrusPending(ClearPapyrusPending&&) = default;
+			ClearPapyrusPending& operator=(const ClearPapyrusPending&) = default;
+			ClearPapyrusPending& operator=(ClearPapyrusPending&&) = default;
+			~ClearPapyrusPending() { g_papyrusPending = false; }
+		} clearPapyrusPending;
+
 		if (g_skyUICacheDone) {
 			return;
 		}
-		g_papyrusPending = false;
 
 		auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
 		if (!vm) {
