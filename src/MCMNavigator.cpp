@@ -493,6 +493,7 @@ namespace MCMNavigator
 			g_papyrusEagerScheduled = false;
 			return;
 		}
+		g_papyrusPending = true;
 		taskIface->AddTask(CacheModListFromPapyrus);
 	}
 }
