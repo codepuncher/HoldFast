@@ -79,11 +79,19 @@ Edit [font=Courier New]Data\SKSE\Plugins\HoldFast.ini[/font]:
 ; Duration in seconds a button must be held to trigger its long-press action (default: 0.5, max: 5.0)
 fHoldDuration=0.5
 ; Long-press action for the Start (Menu) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None (case-insensitive)
 sButtonStartAction=Map
+; Mod to open when sButtonStartAction=MCM. Leave as None to open the MCM mod list.
+sButtonStartMCMModName=None
+; Close the journal automatically when leaving a MCM mod page via Start. Only applies when sButtonStartAction=MCM.
+bButtonStartMCMQuickexit=true
 ; Long-press action for the Back (View) button. Short press performs the button's normal function.
-; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, None (case-insensitive)
+; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None (case-insensitive)
 sButtonBackAction=System
+; Mod to open when sButtonBackAction=MCM. Leave as None to open the MCM mod list.
+sButtonBackMCMModName=None
+; Close the journal automatically when leaving a MCM mod page via Back. Only applies when sButtonBackAction=MCM.
+bButtonBackMCMQuickexit=true
 [/code]
 
 [b]In-game settings (optional):[/b]
@@ -106,6 +114,7 @@ Use [b]Save to config[/b] to persist and apply changes, [b]Reload from config[/b
 [*][font=Courier New]QuickSave[/font] — Performs a quicksave
 [*][font=Courier New]Bestiary[/font] — Opens The Dragonborn's Bestiary (requires mod)
 [*][font=Courier New]CharacterSheet[/font] — Opens Character Menu SE (requires mod)
+[*][font=Courier New]MCM[/font] — Opens the MCM. Optionally navigates to a specific mod's page.
 [*][font=Courier New]None[/font] — Button not intercepted
 [/list]
 
