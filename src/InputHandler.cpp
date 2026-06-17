@@ -10,9 +10,13 @@ namespace
 	constexpr auto kGfxRestoreSavedSettings = "_root.QuestJournalFader.Menu_mc.RestoreSavedSettings";
 	constexpr auto kGfxConfigPanelOpen = "_root.QuestJournalFader.Menu_mc.ConfigPanelOpen";
 	constexpr auto kGfxSwitchPageToFront = "_root.QuestJournalFader.Menu_mc.SwitchPageToFront";
+	constexpr auto kGfxQuestsFader = "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc";
 	constexpr auto kGfxQJOEndPage = "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc.QJO_EndPage";
 	constexpr auto kBestiaryMenuName = "BestiaryMenu";
 	constexpr auto kCharacterSheetMenuName = "CharacterSheet";
+	// Wall-clock guard for DispatchShortPress — kept separate from kMaxHoldDuration so the
+	// hold threshold and the OS-suspend discard threshold don't conflate.
+	constexpr float kSuspensionGuardDuration = 30.0F;
 
 	std::optional<std::string_view> GetDirectOpenMenuName(InputHandler::LongPressAction action)
 	{
@@ -80,6 +84,7 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 	}
 
 	if (a_event->opening) {
+		_journalOpenDispatched = false;
 		if (_pendingTab.has_value()) {
 			const auto tab = *_pendingTab;
 			logger::info("Journal opening — switching to tab {}", static_cast<std::uint32_t>(tab));
@@ -122,8 +127,16 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 	// Safe to check here: dispatch queues AddMessage for the next frame, so by the time
 	// we receive further input events the Journal must already be open (game paused) or
 	// have never opened. The Journal open case is excluded by IsMenuOpen.
+	// _journalOpenDispatched suppresses this for one frame after dispatch so we don't
+	// restore before the Journal has had a chance to read our forced sJournalTabIdx value.
+	// If the Journal never opens (AddMessage dropped), the flag is cleared here so the
+	// restore still fires on the following frame rather than being suppressed indefinitely.
 	if (_tabRestorePending && (!ui || !ui->IsMenuOpen(RE::JournalMenu::MENU_NAME))) {
-		RestoreJournalTab();
+		if (_journalOpenDispatched) {
+			_journalOpenDispatched = false;
+		} else {
+			RestoreJournalTab();
+		}
 	}
 
 	// If SKSE Menu Framework owns input focus, pass input through and clear held-state
@@ -292,6 +305,7 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 				RestoreJournalTab();
 				return;
 			}
+			_journalOpenDispatched = true;
 			// Re-write target tab after menuOpenHandler->ProcessButton() resets sJournalTabIdx internally.
 			// AddMessage is queued for the next frame so the Journal will read our value.
 			// For kMCM, write kSystem (2) — MCM is accessed via the System tab.
@@ -595,6 +609,13 @@ void InputHandler::DetectQJOIfNeeded(RE::GFxMovieView* movie)
 	if (_qjoInstalled.has_value() || !movie) {
 		return;
 	}
+	// Guard: only probe when the Quests page SWF is actually instantiated. On a non-Quests
+	// tab the page may not be loaded yet — GetVariable would return undefined and cache a
+	// false-negative, permanently suppressing QJO navigation for the session.
+	RE::GFxValue questsPage;
+	if (!movie->GetVariable(&questsPage, kGfxQuestsFader) || !questsPage.IsObject()) {
+		return;
+	}
 	// Probe for a QJO-specific function in the Quests page SWF. QJO_EndPage is defined by
 	// QJO and absent in vanilla — GetVariable returns undefined (or fails) without QJO.
 	RE::GFxValue result;
@@ -645,13 +666,18 @@ void InputHandler::HandleMCMQuickexit()
 
 void InputHandler::DispatchShortPress(const ButtonState& state, float held)
 {
-	// Best-effort guard against stale pressTime from process suspension (e.g. Alt-Tab).
-	// Any legitimate short press has held < holdDuration <= kMaxHoldDuration, so this only
-	// fires when pressTime accumulated wall-clock time during suspension while game time
-	// was frozen. Known limitation: suspensions shorter than kMaxHoldDuration seconds may
-	// still dispatch a spurious short press.
-	if (held > kMaxHoldDuration) {
+	// Best-effort guard against stale pressTime from OS suspension (e.g. Alt-Tab): wall-clock
+	// time accumulates while game time freezes, so held can be arbitrarily large after resume.
+	// kSuspensionGuardDuration (30 s) is a sanity sentinel unrelated to kMaxHoldDuration (the
+	// user-facing hold clamp) — keeping them separate makes each threshold's purpose explicit.
+	if (held > kSuspensionGuardDuration) {
 		logger::warn("{} press duration {:.1f}s exceeds sanity limit — discarded", state.name, held);
+		return;
+	}
+
+	auto* ui = RE::UI::GetSingleton();
+	if (ui && ui->GameIsPaused()) {
+		logger::debug("{} short press discarded — game paused at dispatch", state.name);
 		return;
 	}
 

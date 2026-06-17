@@ -103,6 +103,7 @@ private:
 	//               When false/empty, QJO tab-restore logic is skipped entirely.
 	JournalTab                _savedTabIdx{ JournalTab::kQuest };
 	bool                      _tabRestorePending{ false };
+	bool                      _journalOpenDispatched{ false };
 	std::optional<JournalTab> _pendingTab{};
 	std::optional<JournalTab> _lastKnownTab{};
 	std::optional<bool>       _qjoInstalled{};
