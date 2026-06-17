@@ -18,18 +18,11 @@ namespace
 			return duration;
 		}
 		if (!std::isfinite(raw)) {
-			logger::warn("fHoldDuration is non-finite — using default {:.1f}", HoldFast::kDefaultHoldDuration);
+			logger::warn("fHoldDuration is non-finite — using default {:.1f}", duration);
 			return duration;
 		}
-		if (raw <= 0.0F) {
-			logger::warn("fHoldDuration ({:.2f}) must be positive — using default {:.1f}", raw, HoldFast::kDefaultHoldDuration);
-			return duration;
-		}
-		if (raw < HoldFast::kMinHoldDuration) {
-			logger::warn("fHoldDuration ({:.2f}) is below minimum {:.1f} — using default {:.1f}", raw, HoldFast::kMinHoldDuration, HoldFast::kDefaultHoldDuration);
-			return duration;
-		}
-		logger::warn("fHoldDuration ({:.2f}) exceeds maximum {:.1f} — capping", raw, HoldFast::kMaxHoldDuration);
+		logger::warn("fHoldDuration ({:.2f}) out of range [{:.1f}, {:.1f}] — using {:.1f}",
+			raw, HoldFast::kMinHoldDuration, HoldFast::kMaxHoldDuration, duration);
 		return duration;
 	}
 
@@ -73,25 +66,22 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 
 	constexpr auto kValidActions = "Map, System, Quests, Stats, Inventory, Magic, Favorites/Favourites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None";
 
+	const auto warnIfUnrecognised = [kValidActions](const char* raw, const char* key, LongPressAction action) {
+		if (action != LongPressAction::kNone) {
+			return;
+		}
+		if (!HoldFast::CaseInsensitiveEqual(HoldFast::TrimWhitespace(raw), HoldFast::kNoneName)) {
+			logger::warn("{}='{}' is not a recognised action (valid: {}) — disabling button", key, raw, kValidActions);
+		}
+	};
+
 	settings.startAction = hasStart ? ParseAction(rawStart) : LongPressAction::kNone;
-	if (hasStart && settings.startAction == LongPressAction::kNone) {
-		std::string lower{ HoldFast::TrimWhitespace(rawStart) };
-		for (auto& c : lower) {
-			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-		}
-		if (lower != "none") {
-			logger::warn("sButtonStartAction='{}' is not a recognised action (valid: {}) — disabling button", rawStart, kValidActions);
-		}
-	}
 	settings.backAction = hasBack ? ParseAction(rawBack) : LongPressAction::kNone;
-	if (hasBack && settings.backAction == LongPressAction::kNone) {
-		std::string lower{ HoldFast::TrimWhitespace(rawBack) };
-		for (auto& c : lower) {
-			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-		}
-		if (lower != "none") {
-			logger::warn("sButtonBackAction='{}' is not a recognised action (valid: {}) — disabling button", rawBack, kValidActions);
-		}
+	if (hasStart) {
+		warnIfUnrecognised(rawStart, "sButtonStartAction", settings.startAction);
+	}
+	if (hasBack) {
+		warnIfUnrecognised(rawBack, "sButtonBackAction", settings.backAction);
 	}
 
 	settings.startMCMModName = GetMCMTarget(ini, "sButtonStartMCMModName");
@@ -100,11 +90,11 @@ HoldFast::Config::Settings HoldFast::Config::LoadSettings()
 	settings.backMCMQuickexit = ini.GetBoolValue("General", "bButtonBackMCMQuickexit", true);
 
 	if (settings.startAction == LongPressAction::kMCM &&
-		HoldFast::CaseInsensitiveEqual(settings.startMCMModName, "None")) {
+		HoldFast::CaseInsensitiveEqual(settings.startMCMModName, HoldFast::kNoneName)) {
 		logger::warn("sButtonStartAction=MCM but sButtonStartMCMModName is not set — Start button will open MCM without navigating to a specific mod");
 	}
 	if (settings.backAction == LongPressAction::kMCM &&
-		HoldFast::CaseInsensitiveEqual(settings.backMCMModName, "None")) {
+		HoldFast::CaseInsensitiveEqual(settings.backMCMModName, HoldFast::kNoneName)) {
 		logger::warn("sButtonBackAction=MCM but sButtonBackMCMModName is not set — Back button will open MCM without navigating to a specific mod");
 	}
 

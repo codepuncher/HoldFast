@@ -2,12 +2,14 @@
 
 #include <cstdint>
 #include <string>
+#include <string_view>
 
 namespace HoldFast
 {
-	inline constexpr float kMinHoldDuration = 0.1F;
-	inline constexpr float kDefaultHoldDuration = 0.5F;
-	inline constexpr float kMaxHoldDuration = 5.0F;
+	inline constexpr float            kMinHoldDuration = 0.1F;
+	inline constexpr float            kDefaultHoldDuration = 0.5F;
+	inline constexpr float            kMaxHoldDuration = 5.0F;
+	inline constexpr std::string_view kNoneName = "None";
 }
 
 enum class LongPressAction

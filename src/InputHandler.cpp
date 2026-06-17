@@ -527,7 +527,7 @@ void InputHandler::InvokeScaleformTab(JournalTab tab)
 		return;
 	}
 
-	if (_pendingMCMModName.empty() || _pendingMCMModName == "None") {
+	if (_pendingMCMModName.empty() || _pendingMCMModName == HoldFast::kNoneName) {
 		return;
 	}
 	const auto* taskIface = SKSE::GetTaskInterface();

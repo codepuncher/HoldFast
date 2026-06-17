@@ -1,5 +1,6 @@
 #include "PCH.h"
 
+#include "LongPressAction.h"
 #include "MCMNavigator.h"
 #include "Utils.h"
 
@@ -22,7 +23,7 @@ namespace MCMNavigator
 		{
 			return std::ranges::lexicographical_compare(
 				a, b,
-				[](unsigned char x, unsigned char y) { return std::tolower(x) < std::tolower(y); });
+				[](unsigned char x, unsigned char y) { return HoldFast::AsciiToLower(x) < HoldFast::AsciiToLower(y); });
 		}
 
 		std::string_view StripModNamePrefix(std::string_view name)
@@ -294,7 +295,7 @@ namespace MCMNavigator
 
 		void NavigateToTargetImpl(const std::string& modName)
 		{
-			if (modName.empty() || modName == "None") {
+			if (modName.empty() || modName == HoldFast::kNoneName) {
 				return;
 			}
 
