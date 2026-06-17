@@ -142,7 +142,7 @@ namespace
 	{
 		MCMNavigator::EnsureCachePopulated();
 
-		const char* preview = modName.empty() || modName == "None" ? "None" : modName.c_str();
+		const char* preview = modName.empty() || modName == HoldFast::kNoneName ? "None" : modName.c_str();
 
 		if (!ImGuiMCP::BeginCombo(modLabel, preview)) {
 			return;
@@ -150,9 +150,9 @@ namespace
 
 		const auto cachedMods = MCMNavigator::GetCachedModNames();
 
-		const bool noneSelected = modName.empty() || modName == "None";
+		const bool noneSelected = modName.empty() || modName == HoldFast::kNoneName;
 		if (ImGuiMCP::Selectable("None", noneSelected)) {
-			modName = "None";
+			modName = HoldFast::kNoneName;
 			changed = true;
 		}
 

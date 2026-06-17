@@ -9,6 +9,34 @@ using HoldFast::TrimWhitespace;
 using HoldFast::Config::ActionName;
 using HoldFast::Config::ParseAction;
 
+TEST_CASE("AsciiToLower lowercases A-Z only", "[utils]")
+{
+	using HoldFast::AsciiToLower;
+
+	CHECK(AsciiToLower('A') == 'a');
+	CHECK(AsciiToLower('Z') == 'z');
+	CHECK(AsciiToLower('M') == 'm');
+	CHECK(AsciiToLower('a') == 'a');
+	CHECK(AsciiToLower('z') == 'z');
+	CHECK(AsciiToLower('0') == '0');
+	CHECK(AsciiToLower('!') == '!');
+	CHECK(AsciiToLower(static_cast<unsigned char>(0xFF)) == static_cast<unsigned char>(0xFF));
+}
+
+TEST_CASE("CaseInsensitiveEqual matches ASCII case-insensitively", "[utils]")
+{
+	using HoldFast::CaseInsensitiveEqual;
+
+	CHECK(CaseInsensitiveEqual("None", "none"));
+	CHECK(CaseInsensitiveEqual("NONE", "None"));
+	CHECK(CaseInsensitiveEqual("MCM", "mcm"));
+	CHECK(CaseInsensitiveEqual("Map", "MAP"));
+	CHECK(CaseInsensitiveEqual("", ""));
+	CHECK_FALSE(CaseInsensitiveEqual("Map", "Mcm"));
+	CHECK_FALSE(CaseInsensitiveEqual("None", ""));
+	CHECK_FALSE(CaseInsensitiveEqual("abc", "abcd"));
+}
+
 TEST_CASE("TrimWhitespace removes leading and trailing whitespace", "[utils]")
 {
 	CHECK(TrimWhitespace("  hello  ") == "hello");
