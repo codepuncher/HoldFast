@@ -19,6 +19,12 @@ namespace MCMNavigator
 		constexpr auto kModListPanel = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel.";
 		constexpr auto kModList = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel.modListFader.list.";
 
+		constexpr auto kGfxAlpha = "_root.ConfigPanelFader.configPanel._alpha";
+		constexpr auto kGfxSetState = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel.setState";
+		constexpr auto kGfxDisableSelect = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel.modListFader.list.disableSelection";
+		constexpr auto kGfxTitleText = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel._titleText";
+		constexpr auto kGfxState = "_root.ConfigPanelFader.configPanel.contentHolder.modListPanel._state";
+
 		bool CaseInsensitiveLess(const std::string& a, const std::string& b)
 		{
 			return std::ranges::lexicographical_compare(
@@ -106,7 +112,7 @@ namespace MCMNavigator
 			return true;
 		}
 
-		std::vector<std::string> CollectEntryNames(RE::GFxMovieView* view, const std::string& listPath, const char* memberName)
+		std::vector<std::string> CollectEntryNames(RE::GFxMovieView* view, const char* listPath, const char* memberName)
 		{
 			std::vector<std::string> names;
 			if (!view) {
@@ -114,7 +120,7 @@ namespace MCMNavigator
 			}
 
 			RE::GFxValue listObj;
-			view->GetVariable(&listObj, listPath.c_str());
+			view->GetVariable(&listObj, listPath);
 			if (!listObj.IsObject()) {
 				return names;
 			}
@@ -142,7 +148,7 @@ namespace MCMNavigator
 		}
 
 		// Uses doSetSelectedIndex + onItemPress to select and click the entry.
-		bool SelectEntryByName(const std::string& listPath, const char* varName, std::string_view targetName)
+		bool SelectEntryByName(const char* listPath, const char* varName, std::string_view targetName)
 		{
 			auto* view = GetJournalView();
 			if (!view) {
@@ -150,7 +156,7 @@ namespace MCMNavigator
 			}
 
 			RE::GFxValue listObj;
-			view->GetVariable(&listObj, listPath.c_str());
+			view->GetVariable(&listObj, listPath);
 			if (!listObj.IsObject()) {
 				return false;
 			}
@@ -207,9 +213,8 @@ namespace MCMNavigator
 			if (!view) {
 				return;
 			}
-			RE::GFxValue      arg{ 4.0 };  // TRANSITION_TO_LIST state
-			const std::string setStatePath = std::string{ kModListPanel } + "setState";
-			view->Invoke(setStatePath.c_str(), nullptr, &arg, 1);
+			RE::GFxValue arg{ 4.0 };  // TRANSITION_TO_LIST state
+			view->Invoke(kGfxSetState, nullptr, &arg, 1);
 		}
 
 		void OpenMod()
@@ -228,9 +233,8 @@ namespace MCMNavigator
 
 			// Poll disableSelection — list is animating, not ready yet.
 			// Also retry if the mod list path doesn't resolve (MCM may still be fading in).
-			RE::GFxValue      disabled;
-			const std::string disablePath = std::string{ kModList } + "disableSelection";
-			view->GetVariable(&disabled, disablePath.c_str());
+			RE::GFxValue disabled;
+			view->GetVariable(&disabled, kGfxDisableSelect);
 			if (!disabled.IsBool() || disabled.GetBool()) {
 				if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
 					g_lock = false;
@@ -240,7 +244,7 @@ namespace MCMNavigator
 
 			// List is ready — but _entryList may still be empty if SkyUI hasn't
 			// populated the data yet. Retry until we have at least one entry.
-			auto mods = CollectEntryNames(view, std::string{ kModList }, "text");
+			auto mods = CollectEntryNames(view, kModList, "text");
 			if (mods.empty()) {
 				if (!DelayCallForUI(OpenMod, kModRetryFrames)) {
 					g_lock = false;
@@ -251,10 +255,8 @@ namespace MCMNavigator
 			std::ranges::sort(mods, CaseInsensitiveLess);
 			{
 				std::scoped_lock lock(g_cacheMutex);
-				if (g_modCache.empty()) {
-					g_modCache = std::move(mods);
-					logger::debug("MCMNavigator: cached {} mod names", g_modCache.size());
-				}
+				g_modCache = std::move(mods);
+				logger::debug("MCMNavigator: cached {} mod names from GFx", g_modCache.size());
 			}
 
 			if (!SelectEntryByName(kModList, "text", g_target.modName)) {
@@ -272,9 +274,8 @@ namespace MCMNavigator
 			if (!view) {
 				return false;
 			}
-			RE::GFxValue      titleText;
-			const std::string titlePath = std::string{ kModListPanel } + "_titleText";
-			view->GetVariable(&titleText, titlePath.c_str());
+			RE::GFxValue titleText;
+			view->GetVariable(&titleText, kGfxTitleText);
 			return titleText.IsString() && HoldFast::CaseInsensitiveEqual(modName, titleText.GetString());
 		}
 
@@ -284,7 +285,7 @@ namespace MCMNavigator
 			if (!view || !IsMCMOpen()) {
 				return;
 			}
-			auto names = CollectEntryNames(view, std::string{ kModList }, "text");
+			auto names = CollectEntryNames(view, kModList, "text");
 			std::ranges::sort(names, CaseInsensitiveLess);
 			if (names.empty()) {
 				return;
@@ -354,9 +355,8 @@ namespace MCMNavigator
 		if (!view) {
 			return false;
 		}
-		RE::GFxValue      alpha;
-		const std::string alphaPath = std::string{ kConfigPanel } + "_alpha";
-		view->GetVariable(&alpha, alphaPath.c_str());
+		RE::GFxValue alpha;
+		view->GetVariable(&alpha, kGfxAlpha);
 		return alpha.IsNumber() && alpha.GetNumber() == 100.0;
 	}
 
@@ -366,9 +366,8 @@ namespace MCMNavigator
 		if (!view) {
 			return false;
 		}
-		RE::GFxValue      state;
-		const std::string statePath = std::string{ kModListPanel } + "_state";
-		view->GetVariable(&state, statePath.c_str());
+		RE::GFxValue state;
+		view->GetVariable(&state, kGfxState);
 		return state.IsNumber() && state.GetNumber() == 2.0;
 	}
 
@@ -432,6 +431,19 @@ namespace MCMNavigator
 		{
 			~ClearPapyrusPending() { g_papyrusPending = false; }
 		} clearPapyrusPending;
+
+		// Reset the eager-scheduled latch on any non-terminal exit so EnsureCachePopulated
+		// can retry. Terminal exits set g_skyUICacheDone = true, which suppresses the reset.
+		// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
+		const struct ClearEagerScheduled
+		{
+			~ClearEagerScheduled()
+			{
+				if (!g_skyUICacheDone) {
+					g_papyrusEagerScheduled = false;
+				}
+			}
+		} clearEagerScheduled;
 
 		if (g_skyUICacheDone) {
 			return;
