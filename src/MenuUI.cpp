@@ -11,7 +11,10 @@ namespace
 {
 	bool IsFrameworkInstalled()
 	{
-		static const bool installed = SKSEMenuFramework::IsInstalled();
+		static std::atomic<bool> installed{ false };
+		if (!installed && SKSEMenuFramework::IsInstalled()) {
+			installed = true;
+		}
 		return installed;
 	}
 
@@ -144,11 +147,21 @@ namespace
 
 		const char* preview = modName.empty() || modName == HoldFast::kNoneName ? "None" : modName.c_str();
 
+		static const char*              s_openLabel = nullptr;
+		static std::vector<std::string> s_cachedNames;
+
 		if (!ImGuiMCP::BeginCombo(modLabel, preview)) {
+			if (s_openLabel == modLabel) {
+				s_openLabel = nullptr;
+				s_cachedNames.clear();
+			}
 			return;
 		}
 
-		const auto cachedMods = MCMNavigator::GetCachedModNames();
+		if (s_openLabel != modLabel) {
+			s_openLabel = modLabel;
+			s_cachedNames = MCMNavigator::GetCachedModNames();
+		}
 
 		const bool noneSelected = modName.empty() || modName == HoldFast::kNoneName;
 		if (ImGuiMCP::Selectable("None", noneSelected)) {
@@ -156,13 +169,13 @@ namespace
 			changed = true;
 		}
 
-		if (cachedMods.empty()) {
+		if (s_cachedNames.empty()) {
 			ImGuiMCP::Selectable("(Open MCM once to populate)", false, ImGuiMCP::ImGuiSelectableFlags_Disabled);
 			ImGuiMCP::EndCombo();
 			return;
 		}
 
-		for (const auto& opt : cachedMods) {
+		for (const auto& opt : s_cachedNames) {
 			if (ImGuiMCP::Selectable(opt.c_str(), HoldFast::CaseInsensitiveEqual(opt, modName))) {
 				modName = opt;
 				changed = true;

@@ -432,6 +432,19 @@ namespace MCMNavigator
 			~ClearPapyrusPending() { g_papyrusPending = false; }
 		} clearPapyrusPending;
 
+		// Reset the eager-scheduled latch on any non-terminal exit so EnsureCachePopulated
+		// can retry. Terminal exits set g_skyUICacheDone = true, which suppresses the reset.
+		// NOLINTNEXTLINE(cppcoreguidelines-special-member-functions)
+		const struct ClearEagerScheduled
+		{
+			~ClearEagerScheduled()
+			{
+				if (!g_skyUICacheDone) {
+					g_papyrusEagerScheduled = false;
+				}
+			}
+		} clearEagerScheduled;
+
 		if (g_skyUICacheDone) {
 			return;
 		}
@@ -463,7 +476,6 @@ namespace MCMNavigator
 		RE::BSTSmartPointer<RE::BSScript::Object> managerObj;
 		if (!vm->FindBoundObject(handle, "SKI_ConfigManager", managerObj) || !managerObj) {
 			logger::debug("MCMNavigator: SKI_ConfigManager script not yet bound — will retry when MCM opens");
-			g_papyrusEagerScheduled = false;
 			return;
 		}
 
