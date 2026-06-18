@@ -191,28 +191,40 @@ namespace
 		try {
 			auto& state = GetMenuState();
 			bool  changed = false;
+
+			ImGuiMCP::SeparatorText("General");
+			ImGuiMCP::Spacing();
 			changed |= ImGuiMCP::SliderFloat("Hold duration", &state.stagedSettings.holdDuration, InputHandler::kMinHoldDuration, InputHandler::kMaxHoldDuration, "%.2fs");
-			changed |= DrawActionCombo("Start long-press action", state.stagedSettings.startAction);
+
+			ImGuiMCP::Spacing();
+			ImGuiMCP::SeparatorText("Start button");
+			ImGuiMCP::Spacing();
+			changed |= DrawActionCombo("Action##start", state.stagedSettings.startAction);
 			if (state.stagedSettings.startAction == InputHandler::LongPressAction::kMCM) {
-				DrawMCMTargetInputs(
-					"Start MCM mod name",
-					state.stagedSettings.startMCMModName,
-					changed);
+				ImGuiMCP::Indent();
+				DrawMCMTargetInputs("MCM mod name##start", state.stagedSettings.startMCMModName, changed);
 				changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##start", &state.stagedSettings.startMCMQuickexit);
+				ImGuiMCP::Unindent();
 			}
-			changed |= DrawActionCombo("Back long-press action", state.stagedSettings.backAction);
+
+			ImGuiMCP::Spacing();
+			ImGuiMCP::SeparatorText("Back button");
+			ImGuiMCP::Spacing();
+			changed |= DrawActionCombo("Action##back", state.stagedSettings.backAction);
 			if (state.stagedSettings.backAction == InputHandler::LongPressAction::kMCM) {
-				DrawMCMTargetInputs(
-					"Back MCM mod name",
-					state.stagedSettings.backMCMModName,
-					changed);
+				ImGuiMCP::Indent();
+				DrawMCMTargetInputs("MCM mod name##back", state.stagedSettings.backMCMModName, changed);
 				changed |= ImGuiMCP::Checkbox("Close journal after leaving MCM mod page##back", &state.stagedSettings.backMCMQuickexit);
+				ImGuiMCP::Unindent();
 			}
 
 			if (changed) {
 				state.hasPendingChanges = true;
 			}
 
+			ImGuiMCP::Spacing();
+			ImGuiMCP::Separator();
+			ImGuiMCP::Spacing();
 			if (ImGuiMCP::Button("Save to config")) {
 				SavePendingChanges();
 			}
