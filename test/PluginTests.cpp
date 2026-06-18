@@ -116,9 +116,9 @@ TEST_CASE("ActionName maps enum values and falls back to None", "[config]")
 {
 	using Action = LongPressAction;
 
-	CHECK(ActionName(Action::kMap) == "Map");
-	CHECK(ActionName(Action::kMCM) == "MCM");
-	CHECK(ActionName(Action::kQuickSave) == "QuickSave");
-	CHECK(ActionName(Action::kCharacterSheet) == "CharacterSheet");
-	CHECK(ActionName(static_cast<Action>(9999)) == "None");
+	CHECK(std::string_view{ ActionName(Action::kMap) } == "Map");
+	CHECK(std::string_view{ ActionName(Action::kMCM) } == "MCM");
+	CHECK(std::string_view{ ActionName(Action::kQuickSave) } == "QuickSave");
+	CHECK(std::string_view{ ActionName(Action::kCharacterSheet) } == "CharacterSheet");
+	CHECK(std::string_view{ ActionName(static_cast<Action>(9999)) } == "None");
 }
