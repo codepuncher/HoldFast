@@ -94,7 +94,6 @@ jobs:
 
     permissions:
       contents: read
-      actions: write
 
     steps:
       - uses: actions/checkout@v6
@@ -148,7 +147,6 @@ jobs:
 
     permissions:
       contents: read
-      actions: write
 
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -209,7 +207,6 @@ jobs:
 
     permissions:
       contents: read
-      actions: write
 
     steps:
       - name: Checkout
