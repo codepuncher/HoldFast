@@ -4,6 +4,11 @@
     "README.md",
     "docs/**/*.md"
   ],
+  "excludes": [
+    "lib/**",
+    "build/**",
+    "vcpkg_installed/**"
+  ],
   "plugins": [
     "https://plugins.dprint.dev/markdown-0.22.1.wasm"
   ],
