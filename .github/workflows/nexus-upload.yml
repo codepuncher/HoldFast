@@ -108,12 +108,12 @@ jobs:
         uses: Nexus-Mods/upload-action@v1.0.0-beta.9
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
-          file_group_id: ${{ vars.NEXUSMODS_FILE_GROUP_ID }}
+          file_id: ${{ vars.NEXUSMODS_FILE_GROUP_ID }}
           filename: ${{ steps.artifact.outputs.zip }}
           display_name: ${{ github.event.repository.name }}
           description: ${{ steps.notes.outputs.notes }}
           version: ${{ steps.version.outputs.value }}
-          archive_existing_file: true
+          archive_existing_version: true
           primary_mod_manager_download: true
           allow_mod_manager_download: true
           show_requirements_pop_up: true
