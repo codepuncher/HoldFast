@@ -14,8 +14,10 @@ namespace
 	constexpr auto kGfxQJOEndPage = "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc.QJO_EndPage";
 	constexpr auto kBestiaryMenuName = "BestiaryMenu";
 	constexpr auto kCharacterSheetMenuName = "CharacterSheet";
-	// Wall-clock guard for DispatchShortPress — kept separate from kMaxHoldDuration so the
-	// hold threshold and the OS-suspend discard threshold don't conflate.
+	/**
+	 * Wall-clock guard for DispatchShortPress, kept separate from kMaxHoldDuration so the
+	 * hold threshold and the OS-suspend discard threshold don't conflate.
+	 */
 	constexpr float kSuspensionGuardDuration = 30.0F;
 
 	std::optional<std::string_view> GetDirectOpenMenuName(InputHandler::LongPressAction action)
@@ -88,15 +90,21 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		if (_pendingTab.has_value()) {
 			const auto tab = *_pendingTab;
 			logger::info("Journal opening — switching to tab {}", static_cast<std::uint32_t>(tab));
-			// Synchronous call — opening=true fires during Skyrim's UI update phase,
-			// not during input polling, so Scaleform calls are safe here.
+			/**
+			 * Synchronous call: opening=true fires during Skyrim's UI update phase,
+			 * not during input polling, so Scaleform calls are safe here.
+			 */
 			InvokeScaleformTab(tab);
-			// Reset after invoke. No retry: if uiMovie was unavailable, keeping _pendingTab
-			// set would fire again on the next unrelated Journal open, which is confusing.
+			/**
+			 * Reset after invoke. No retry: if uiMovie was unavailable, keeping _pendingTab
+			 * set would fire again on the next unrelated Journal open, which is confusing.
+			 */
 			_pendingTab.reset();
 		} else if (_lastKnownTab.has_value()) {
-			// Counter QJO's forced kSystem override on all Journal opens —
-			// restore to the tab the player was last on (skip until first snapshot fires).
+			/**
+			 * Counter QJO's forced kSystem override on all Journal opens: restore to the
+			 * tab the player was last on (skip until first snapshot fires).
+			 */
 			InvokeRestoreTabIfNeeded(*_lastKnownTab);
 		}
 		return RE::BSEventNotifyControl::kContinue;
@@ -121,16 +129,18 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 
 	auto* ui = RE::UI::GetSingleton();
 
-	// Fail-safe: if a tab restore is pending but the Journal is not open (or UI singleton
-	// is unavailable), the Journal failed to open or the close event was not delivered —
-	// restore sJournalTabIdx now rather than leaving the forced value in place indefinitely.
-	// Safe to check here: dispatch queues AddMessage for the next frame, so by the time
-	// we receive further input events the Journal must already be open (game paused) or
-	// have never opened. The Journal open case is excluded by IsMenuOpen.
-	// _journalOpenDispatched suppresses this for one frame after dispatch so we don't
-	// restore before the Journal has had a chance to read our forced sJournalTabIdx value.
-	// If the Journal never opens (AddMessage dropped), the flag is cleared here so the
-	// restore still fires on the following frame rather than being suppressed indefinitely.
+	/**
+	 * Fail-safe: if a tab restore is pending but the Journal is not open (or UI singleton
+	 * is unavailable), the Journal failed to open or the close event was not delivered:
+	 * restore sJournalTabIdx now rather than leaving the forced value in place indefinitely.
+	 * Safe to check here: dispatch queues AddMessage for the next frame, so by the time
+	 * we receive further input events the Journal must already be open (game paused) or
+	 * have never opened. The Journal open case is excluded by IsMenuOpen.
+	 * _journalOpenDispatched suppresses this for one frame after dispatch so we don't
+	 * restore before the Journal has had a chance to read our forced sJournalTabIdx value.
+	 * If the Journal never opens (AddMessage dropped), the flag is cleared here so the
+	 * restore still fires on the following frame rather than being suppressed indefinitely.
+	 */
 	if (_tabRestorePending && (!ui || !ui->IsMenuOpen(RE::JournalMenu::MENU_NAME))) {
 		if (_journalOpenDispatched) {
 			_journalOpenDispatched = false;
@@ -139,8 +149,10 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		}
 	}
 
-	// If SKSE Menu Framework owns input focus, pass input through and clear held-state
-	// captures so Start/Back interception cannot fight the settings UI.
+	/**
+	 * If SKSE Menu Framework owns input focus, pass input through and clear held-state
+	 * captures so Start/Back interception cannot fight the settings UI.
+	 */
 	if (!_buttons.empty() && HoldFastMenuUI::IsBlockingInput()) {
 		for (auto& bs : _buttons) {
 			bs.pressTime.reset();
@@ -149,11 +161,13 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
-	// If any pausing menu is open, pass all input through and clear any captured press so it
-	// can't fire a spurious dispatch once the menu closes.
-	// Also pass through for kCharacterSheet: it uses kModal but not kPausesGame, so
-	// GameIsPaused() stays false while it is open. Without this guard, HoldFast would keep
-	// consuming Start/Back and could attempt to dispatch another action on top of it.
+	/**
+	 * If any pausing menu is open, pass all input through and clear any captured press so it
+	 * can't fire a spurious dispatch once the menu closes.
+	 * Also pass through for kCharacterSheet: it uses kModal but not kPausesGame, so
+	 * GameIsPaused() stays false while it is open. Without this guard, HoldFast would keep
+	 * consuming Start/Back and could attempt to dispatch another action on top of it.
+	 */
 	if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(kCharacterSheetMenuName))) {
 		if (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {
 			SnapshotJournalTab(ui);
@@ -167,11 +181,13 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
-	// kStop halts the entire frame's event batch for all downstream sinks. With both Start
-	// and Back tracked by default, this fires on every press of either managed button.
-	// Pressing any other input while a managed button hold is in progress is suppressed from
-	// downstream sinks. This is intentional: hold detection requires exclusive ownership of
-	// those frames. Selective kStop per event is not feasible with CommonLib's batch API.
+	/**
+	 * kStop halts the entire frame's event batch for all downstream sinks. With both Start
+	 * and Back tracked by default, this fires on every press of either managed button.
+	 * Pressing any other input while a managed button hold is in progress is suppressed from
+	 * downstream sinks. This is intentional: hold detection requires exclusive ownership of
+	 * those frames. Selective kStop per event is not feasible with CommonLib's batch API.
+	 */
 	return ScanInputEvents(a_events) ? RE::BSEventNotifyControl::kStop : RE::BSEventNotifyControl::kContinue;
 }
 
@@ -306,9 +322,11 @@ void InputHandler::DispatchLongPress(const ButtonState& state)
 				return;
 			}
 			_journalOpenDispatched = true;
-			// Re-write target tab after menuOpenHandler->ProcessButton() resets sJournalTabIdx internally.
-			// AddMessage is queued for the next frame so the Journal will read our value.
-			// For kMCM, write kSystem (2) — MCM is accessed via the System tab.
+			/**
+			 * Re-write target tab after menuOpenHandler->ProcessButton() resets sJournalTabIdx internally.
+			 * AddMessage is queued for the next frame so the Journal will read our value.
+			 * For kMCM, write kSystem (2): MCM is accessed via the System tab.
+			 */
 			if (sJournalTabIdx.get()) {
 				*sJournalTabIdx = JournalTabToIndex(targetTab);
 			}
@@ -422,10 +440,12 @@ void InputHandler::OpenJournalOnTab(JournalTab tab, const std::string& buttonNam
 	const auto sJournalValue = JournalTabToIndex(tab);
 
 	if (!sJournalTabIdx.get()) {
-		// sJournalTabIdx unavailable — skip write/restore bookkeeping for the relocation,
-		// but keep _pendingTab set so InvokeScaleformTab still fires on opening=true.
-		// Set _tabRestorePending so the existing fail-safe clears _pendingTab if the Journal
-		// never opens (RestoreJournalTab handles the unavailable relocation gracefully).
+		/**
+		 * sJournalTabIdx unavailable: skip write/restore bookkeeping for the relocation,
+		 * but keep _pendingTab set so InvokeScaleformTab still fires on opening=true.
+		 * Set _tabRestorePending so the existing fail-safe clears _pendingTab if the Journal
+		 * never opens (RestoreJournalTab handles the unavailable relocation gracefully).
+		 */
 		logger::warn("{} long press: sJournalTabIdx unavailable — skipping tab index bookkeeping", buttonName);
 		_tabRestorePending = true;
 		return;
@@ -447,13 +467,14 @@ void InputHandler::RestoreJournalTab()
 	ResetMCMQuickexitState();
 }
 
+/**
+ * Snapshot the journal's current tab on every input while the journal is open. The SWF
+ * is alive here (game is paused by the journal), and the last snapshot before the player
+ * presses close captures the correct final tab, before the SWF is freed.
+ * Only needed when QJO is installed; on vanilla, sJournalTabIdx is reliable.
+ */
 void InputHandler::SnapshotJournalTab(RE::UI* ui)
 {
-	// Snapshot the journal's current tab on every input while the journal is open. The SWF
-	// is alive here (game is paused by the journal), and the last snapshot before the player
-	// presses close captures the correct final tab — before the SWF is freed.
-	// Only needed when QJO is installed; on vanilla, sJournalTabIdx is reliable.
-
 	// Fast path: once detection has confirmed QJO is not installed, skip the GetMenu lookup.
 	if (_qjoInstalled == false) {
 		return;
@@ -476,10 +497,12 @@ void InputHandler::SnapshotJournalTab(RE::UI* ui)
 		return;
 	}
 	const auto captured = static_cast<JournalTab>(static_cast<std::uint32_t>(num));
-	// Skip kQuest (0): when QJO is installed the SWF sets iCurrentTab=0 just before calling
-	// CloseMenu to open QJO's quests view. Snapshotting 0 would cause the next Journal open
-	// to restore to that navigation-away state. The player's last meaningful tab is whatever
-	// was captured before the L2/R2 press that triggered the QJO quests view.
+	/**
+	 * Skip kQuest (0): when QJO is installed the SWF sets iCurrentTab=0 just before calling
+	 * CloseMenu to open QJO's quests view. Snapshotting 0 would cause the next Journal open
+	 * to restore to that navigation-away state. The player's last meaningful tab is whatever
+	 * was captured before the L2/R2 press that triggered the QJO quests view.
+	 */
 	if (captured != JournalTab::kQuest) {
 		_lastKnownTab = captured;
 	}
@@ -501,8 +524,10 @@ void InputHandler::InvokeScaleformTab(JournalTab tab)
 	}
 
 	if (tab == JournalTab::kQuest) {
-		// QJO_EndPage closes the Journal and opens QuestMenu (QJO's Quests navigation path).
-		// Falls back to vanilla SwitchPageToFront without QJO.
+		/**
+		 * QJO_EndPage closes the Journal and opens QuestMenu (QJO's Quests navigation path).
+		 * Falls back to vanilla SwitchPageToFront without QJO.
+		 */
 		const bool qjoOk = journal->uiMovie->Invoke(kGfxQJOEndPage, nullptr, nullptr, 0);
 		logger::info("Journal long press: QJO_EndPage {}", qjoOk ? "ok" : "not found — vanilla fallback");
 		if (!qjoOk) {
@@ -511,8 +536,10 @@ void InputHandler::InvokeScaleformTab(JournalTab tab)
 			if (!setOk) {
 				logger::warn("Journal long press: SetVariable(iCurrentTab={}) failed", tabIdx);
 			}
-			// SwitchPageToFront(tabIdx, abForceFade) — second arg is abForceFade, not abTabsDisabled.
-			// true forces an immediate tab transition even if a fade is already in progress.
+			/**
+			 * SwitchPageToFront(tabIdx, abForceFade): second arg is abForceFade, not abTabsDisabled.
+			 * true forces an immediate tab transition even if a fade is already in progress.
+			 */
 			std::array<RE::GFxValue, 2> fallback{ static_cast<double>(tabIdx), true /* abForceFade */ };
 			journal->uiMovie->Invoke(
 				kGfxSwitchPageToFront,
@@ -521,10 +548,12 @@ void InputHandler::InvokeScaleformTab(JournalTab tab)
 		return;
 	}
 
-	// RestoreSavedSettings(tabIdx, abTabsDisabled) — second arg is abTabsDisabled, not abForceFade.
-	// false means tabs are enabled (interactive), which is the normal state.
-	// This function atomically sets the active tab, updates the tab bar highlight,
-	// and fires onTabChange → startPage() to populate page data.
+	/**
+	 * RestoreSavedSettings(tabIdx, abTabsDisabled): second arg is abTabsDisabled, not abForceFade.
+	 * false means tabs are enabled (interactive), which is the normal state.
+	 * This function atomically sets the active tab, updates the tab bar highlight,
+	 * and fires onTabChange → startPage() to populate page data.
+	 */
 	std::array<RE::GFxValue, 2> args{ static_cast<double>(tabIdx), false /* abTabsDisabled */ };
 	const bool                  ok = journal->uiMovie->Invoke(
 		kGfxRestoreSavedSettings,
@@ -555,11 +584,13 @@ void InputHandler::InvokeScaleformTab(JournalTab tab)
 	});
 }
 
+/**
+ * Only needed when QJO is installed: QJO unconditionally forces sJournalTabIdx to
+ * kSystem on every Journal open, making sJournalTabIdx unreliable for tab tracking.
+ * On vanilla, sJournalTabIdx is the authoritative tab selection; no Scaleform call needed.
+ */
 void InputHandler::InvokeRestoreTabIfNeeded(JournalTab tab)
 {
-	// Only needed when QJO is installed — QJO unconditionally forces sJournalTabIdx to
-	// kSystem on every Journal open, making sJournalTabIdx unreliable for tab tracking.
-	// On vanilla, sJournalTabIdx is the authoritative tab selection; no Scaleform call needed.
 	const auto tabIdx = static_cast<std::uint32_t>(tab);
 
 	auto* ui = RE::UI::GetSingleton();
@@ -609,15 +640,19 @@ void InputHandler::DetectQJOIfNeeded(RE::GFxMovieView* movie)
 	if (_qjoInstalled.has_value() || !movie) {
 		return;
 	}
-	// Guard: only probe when the Quests page SWF is actually instantiated. On a non-Quests
-	// tab the page may not be loaded yet — GetVariable would return undefined and cache a
-	// false-negative, permanently suppressing QJO navigation for the session.
+	/**
+	 * Guard: only probe when the Quests page SWF is actually instantiated. On a non-Quests
+	 * tab the page may not be loaded yet: GetVariable would return undefined and cache a
+	 * false-negative, permanently suppressing QJO navigation for the session.
+	 */
 	RE::GFxValue questsPage;
 	if (!movie->GetVariable(&questsPage, kGfxQuestsFader) || !questsPage.IsObject()) {
 		return;
 	}
-	// Probe for a QJO-specific function in the Quests page SWF. QJO_EndPage is defined by
-	// QJO and absent in vanilla — GetVariable returns undefined (or fails) without QJO.
+	/**
+	 * Probe for a QJO-specific function in the Quests page SWF. QJO_EndPage is defined by
+	 * QJO and absent in vanilla; GetVariable returns undefined (or fails) without QJO.
+	 */
 	RE::GFxValue result;
 	const bool   found = movie->GetVariable(&result, kGfxQJOEndPage);
 	_qjoInstalled = found && result.GetType() != RE::GFxValue::ValueType::kUndefined;
@@ -666,10 +701,12 @@ void InputHandler::HandleMCMQuickexit()
 
 void InputHandler::DispatchShortPress(const ButtonState& state, float held)
 {
-	// Best-effort guard against stale pressTime from OS suspension (e.g. Alt-Tab): wall-clock
-	// time accumulates while game time freezes, so held can be arbitrarily large after resume.
-	// kSuspensionGuardDuration (30 s) is a sanity sentinel unrelated to kMaxHoldDuration (the
-	// user-facing hold clamp) — keeping them separate makes each threshold's purpose explicit.
+	/**
+	 * Best-effort guard against stale pressTime from OS suspension (e.g. Alt-Tab): wall-clock
+	 * time accumulates while game time freezes, so held can be arbitrarily large after resume.
+	 * kSuspensionGuardDuration (30 s) is a sanity sentinel unrelated to kMaxHoldDuration (the
+	 * user-facing hold clamp); keeping them separate makes each threshold's purpose explicit.
+	 */
 	if (held > kSuspensionGuardDuration) {
 		logger::warn("{} press duration {:.1f}s exceeds sanity limit — discarded", state.name, held);
 		return;
