@@ -14,6 +14,8 @@ namespace
 	constexpr auto kGfxQJOEndPage = "_root.QuestJournalFader.Menu_mc.QuestsFader.Page_mc.QJO_EndPage";
 	constexpr auto kBestiaryMenuName = "BestiaryMenu";
 	constexpr auto kCharacterSheetMenuName = "CharacterSheet";
+	constexpr auto kQuickLootMenuName = "LootMenu";
+
 	/**
 	 * Wall-clock guard for DispatchShortPress, kept separate from kMaxHoldDuration so the
 	 * hold threshold and the OS-suspend discard threshold don't conflate.
@@ -36,6 +38,42 @@ namespace
 		default:
 			return std::nullopt;
 		}
+	}
+
+	constexpr std::array<std::string_view, 26> kBlockingMenuNames{
+		RE::DialogueMenu::MENU_NAME,
+		RE::InventoryMenu::MENU_NAME,
+		RE::ContainerMenu::MENU_NAME,
+		RE::MagicMenu::MENU_NAME,
+		RE::BarterMenu::MENU_NAME,
+		RE::GiftMenu::MENU_NAME,
+		RE::CraftingMenu::MENU_NAME,
+		RE::FavoritesMenu::MENU_NAME,
+		RE::BookMenu::MENU_NAME,
+		RE::LockpickingMenu::MENU_NAME,
+		RE::RaceSexMenu::MENU_NAME,
+		RE::TrainingMenu::MENU_NAME,
+		RE::TutorialMenu::MENU_NAME,
+		RE::MessageBoxMenu::MENU_NAME,
+		RE::Console::MENU_NAME,
+		RE::ConsoleNativeUIMenu::MENU_NAME,
+		RE::StatsMenu::MENU_NAME,
+		RE::SleepWaitMenu::MENU_NAME,
+		RE::TweenMenu::MENU_NAME,
+		RE::ModManagerMenu::MENU_NAME,
+		RE::CreationClubMenu::MENU_NAME,
+		RE::JournalMenu::MENU_NAME,
+		RE::MapMenu::MENU_NAME,
+		kCharacterSheetMenuName,
+		kBestiaryMenuName,
+		kQuickLootMenuName,
+	};
+
+	bool IsBlockingMenuOpen(RE::UI* ui)
+	{
+		return std::ranges::any_of(kBlockingMenuNames, [ui](std::string_view name) {
+			return ui->IsMenuOpen(name);
+		});
 	}
 }
 
@@ -161,14 +199,7 @@ RE::BSEventNotifyControl InputHandler::ProcessEvent(
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
-	/**
-	 * If any pausing menu is open, pass all input through and clear any captured press so it
-	 * can't fire a spurious dispatch once the menu closes.
-	 * Also pass through for kCharacterSheet: it uses kModal but not kPausesGame, so
-	 * GameIsPaused() stays false while it is open. Without this guard, HoldFast would keep
-	 * consuming Start/Back and could attempt to dispatch another action on top of it.
-	 */
-	if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(kCharacterSheetMenuName))) {
+	if (ui && (IsBlockingMenuOpen(ui) || ui->GameIsPaused())) {
 		if (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {
 			SnapshotJournalTab(ui);
 			MCMNavigator::TryCacheFromOpenMCM();
