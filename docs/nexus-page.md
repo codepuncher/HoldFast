@@ -55,6 +55,7 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 [size=4][b][color=#B8953E]Installation[/color][/b][/size]
 
 [b]Mod manager (recommended):[/b]
+
 [list=1]
 [*]Install the requirements above.
 [*]Install HoldFast via your mod manager.
@@ -62,6 +63,7 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 [/list]
 
 [b]Manual:[/b]
+
 [list=1]
 [*]Install the requirements above.
 [*]Copy [font=Courier New]HoldFast.dll[/font] and [font=Courier New]HoldFast.ini[/font] to [font=Courier New]Data\SKSE\Plugins\[/font].
@@ -81,20 +83,21 @@ fHoldDuration=0.5
 ; Long-press action for the Start (Menu) button. Short press performs the button's normal function.
 ; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None (case-insensitive)
 sButtonStartAction=Map
-; Mod to open when sButtonStartAction=MCM. Leave as None to open the MCM mod list.
+; Mod to open when sButtonStartAction=MCM. Use the mod name as displayed in MCM (e.g. Better Third Person Selection) or leave as None to open the MCM mod list.
 sButtonStartMCMModName=None
 ; Close the journal automatically when leaving a MCM mod page via Start. Only applies when sButtonStartAction=MCM.
 bButtonStartMCMQuickexit=true
 ; Long-press action for the Back (View) button. Short press performs the button's normal function.
 ; Valid values: Map, System, Quests, Stats, Inventory, Magic, Favorites, TweenMenu, Wait, NewSave, QuickSave, Bestiary, CharacterSheet, MCM, None (case-insensitive)
 sButtonBackAction=System
-; Mod to open when sButtonBackAction=MCM. Leave as None to open the MCM mod list.
+; Mod to open when sButtonBackAction=MCM. Use the mod name as displayed in MCM (e.g. Better Third Person Selection) or leave as None to open the MCM mod list.
 sButtonBackMCMModName=None
 ; Close the journal automatically when leaving a MCM mod page via Back. Only applies when sButtonBackAction=MCM.
 bButtonBackMCMQuickexit=true
 [/code]
 
 [b]In-game settings (optional):[/b]
+
 If SKSE Menu Framework v3 is installed, HoldFast adds a [font=Courier New]HoldFast/Settings[/font] page in its mod control panel.
 Use [b]Save to config[/b] to persist and apply changes, [b]Reload from config[/b] to discard staged edits and reload INI values, and [b]Reset to defaults[/b] to stage defaults ([font=Courier New]0.5[/font], [font=Courier New]Start=Map[/font], [font=Courier New]Back=System[/font]) until saved.
 
@@ -119,6 +122,7 @@ Use [b]Save to config[/b] to persist and apply changes, [b]Reload from config[/b
 [/list]
 
 Logs are written to:
+
 [code]
 %USERPROFILE%\Documents\My Games\Skyrim Special Edition\SKSE\HoldFast.log
 [/code]
