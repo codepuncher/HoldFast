@@ -39,8 +39,10 @@ public:
 	// Call before registering the input sink.
 	void SetButtons(std::vector<ButtonConfig> a_configs);
 
-	// Queries ControlMap for the short-press user event for every tracked button and caches it.
-	// Call at kInputLoaded, kPostLoadGame, kNewGame, and on JournalMenu close.
+	/**
+	 * Resolves and caches each tracked button's short-press event and combo modifiers.
+	 * Call at kInputLoaded, kPostLoadGame, kNewGame, and on JournalMenu close.
+	 */
 	void UpdateShortPressBinding();
 
 	~InputHandler() override = default;
@@ -64,28 +66,30 @@ private:
 	struct ButtonState : ButtonConfig
 	{
 		RE::BSFixedString                                    shortPressUserEvent;
+		std::vector<std::uint16_t>                           comboModifiers;
 		std::optional<std::chrono::steady_clock::time_point> pressTime;
 		bool                                                 triggered{ false };
 	};
 
-	bool                 ScanInputEvents(RE::InputEvent* const* a_events);
-	bool                 ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
-	static bool          DispatchViaMenuOpenHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static bool          DispatchViaQuickSaveLoadHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static bool          DispatchViaFavoritesHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static bool          DispatchViaHandler(RE::MenuEventHandler* handler, std::string_view handlerName, const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
-	static void          DispatchShortPress(const ButtonState& state, float held);
-	static std::uint32_t JournalTabToIndex(JournalTab tab);
-	static void          CloseJournal();
-	void                 DispatchLongPress(const ButtonState& state);
-	void                 OpenJournalOnTab(JournalTab tab, const std::string& buttonName);
-	void                 RestoreJournalTab();
-	void                 InvokeScaleformTab(JournalTab tab);
-	void                 InvokeRestoreTabIfNeeded(JournalTab tab);
-	void                 SnapshotJournalTab(RE::UI* ui);
-	void                 DetectQJOIfNeeded(RE::GFxMovieView* movie);
-	void                 HandleMCMQuickexit();
-	void                 ResetMCMQuickexitState();
+	bool                      ScanInputEvents(RE::InputEvent* const* a_events);
+	bool                      ProcessButton(const RE::ButtonEvent* btn, ButtonState& state);
+	[[nodiscard]] static bool IsAnyComboModifierHeld(const ButtonState& state);
+	static bool               DispatchViaMenuOpenHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool               DispatchViaQuickSaveLoadHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool               DispatchViaFavoritesHandler(const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static bool               DispatchViaHandler(RE::MenuEventHandler* handler, std::string_view handlerName, const RE::BSFixedString& userEvent, std::uint32_t keyCode, const std::string& logContext);
+	static void               DispatchShortPress(const ButtonState& state, float held);
+	static std::uint32_t      JournalTabToIndex(JournalTab tab);
+	static void               CloseJournal();
+	void                      DispatchLongPress(const ButtonState& state);
+	void                      OpenJournalOnTab(JournalTab tab, const std::string& buttonName);
+	void                      RestoreJournalTab();
+	void                      InvokeScaleformTab(JournalTab tab);
+	void                      InvokeRestoreTabIfNeeded(JournalTab tab);
+	void                      SnapshotJournalTab(RE::UI* ui);
+	void                      DetectQJOIfNeeded(RE::GFxMovieView* movie);
+	void                      HandleMCMQuickexit();
+	void                      ResetMCMQuickexitState();
 
 	float                    holdDuration{ kDefaultHoldDuration };
 	std::vector<ButtonState> _buttons;
