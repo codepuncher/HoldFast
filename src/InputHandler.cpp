@@ -1,5 +1,6 @@
 #include "PCH.h"
 
+#include "BindingResolver.h"
 #include "InputHandler.h"
 #include "MCMNavigator.h"
 #include "MenuUI.h"
@@ -101,17 +102,45 @@ void InputHandler::UpdateShortPressBinding()
 		logger::error("ControlMap unavailable — short press will have no effect");
 		for (auto& bs : _buttons) {
 			bs.shortPressUserEvent = "";
+			bs.comboModifiers.clear();
 		}
 		return;
 	}
 
-	for (auto& bs : _buttons) {
-		bs.shortPressUserEvent = controlMap->GetUserEventName(bs.keyCode, RE::INPUT_DEVICE::kGamepad);
-		if (bs.shortPressUserEvent.empty()) {
-			logger::warn("{} has no binding in ControlMap — short press disabled", bs.name);
-			continue;
+	std::vector<HoldFast::RawMapping> mappings;
+	const auto*                       gameplayContext = controlMap->controlMap[RE::UserEvents::INPUT_CONTEXT_ID::kGameplay];
+	if (gameplayContext) {
+		const auto& deviceMappings = gameplayContext->deviceMappings[RE::INPUT_DEVICE::kGamepad];
+		mappings.reserve(deviceMappings.size());
+		for (const auto& mapping : deviceMappings) {
+			// BSFixedString::c_str() never returns null (falls back to an empty string).
+			mappings.push_back({
+				.eventID = std::string{ mapping.eventID.c_str() },
+				.inputKey = mapping.inputKey,
+				.modifier = mapping.modifier,
+			});
 		}
-		logger::info("{} short press user event: '{}'", bs.name, bs.shortPressUserEvent);
+	} else {
+		logger::error("Gameplay input context unavailable — short press will have no effect");
+	}
+
+	for (auto& bs : _buttons) {
+		const auto keyCode = static_cast<std::uint16_t>(bs.keyCode);
+		const auto resolved = HoldFast::ResolveBinding(keyCode, mappings);
+		bs.shortPressUserEvent = resolved.soloEvent.c_str();
+		bs.comboModifiers = resolved.comboModifiers;
+
+		if (bs.shortPressUserEvent.empty()) {
+			logger::warn("{} has no unmodified binding in ControlMap — short press disabled", bs.name);
+		} else {
+			logger::info("{} short press user event: '{}'", bs.name, bs.shortPressUserEvent);
+		}
+		if (!bs.comboModifiers.empty()) {
+			logger::info("{} is a combo terminal for {} modifier(s) — combo presses pass through", bs.name, bs.comboModifiers.size());
+		}
+		if (HoldFast::IsUsedAsModifier(keyCode, mappings)) {
+			logger::warn("{} is bound as a combo modifier — combos starting with it will not work while HoldFast tracks it", bs.name);
+		}
 	}
 }
 
@@ -248,8 +277,37 @@ bool InputHandler::ScanInputEvents(RE::InputEvent* const* a_events)
 	return shouldBlock;
 }
 
+/**
+ * Queries live gamepad state rather than tracking modifier events, so nothing can go
+ * stale across menus or focus changes.
+ */
+bool InputHandler::IsAnyComboModifierHeld(const ButtonState& state)
+{
+	if (state.comboModifiers.empty()) {
+		return false;
+	}
+	auto* deviceManager = RE::BSInputDeviceManager::GetSingleton();
+	if (!deviceManager) {
+		return false;
+	}
+	auto* gamepad = deviceManager->GetGamepad();
+	if (!gamepad) {
+		return false;
+	}
+	return std::ranges::any_of(state.comboModifiers, [gamepad](std::uint16_t modifier) {
+		return gamepad->IsPressed(modifier);
+	});
+}
+
 bool InputHandler::ProcessButton(const RE::ButtonEvent* btn, ButtonState& state)
 {
+	if (btn->IsDown() && IsAnyComboModifierHeld(state)) {
+		// pressTime stays unset so the Held/Up guards below also fall through.
+		state.pressTime.reset();
+		state.triggered = false;
+		return false;
+	}
+
 	if (btn->IsDown()) {
 		state.pressTime = std::chrono::steady_clock::now();
 		state.triggered = false;
@@ -754,5 +812,19 @@ void InputHandler::DispatchShortPress(const ButtonState& state, float held)
 		return;
 	}
 
-	DispatchViaMenuOpenHandler(state.shortPressUserEvent, state.keyCode, state.name + " short press");
+	const std::string logCtx = state.name + " short press";
+
+	// menuOpenHandler rejects Favorites and QuickSave/QuickLoad/NewSave; route to their own handlers.
+	const auto* userEvents = RE::UserEvents::GetSingleton();
+	if (userEvents && state.shortPressUserEvent == userEvents->favorites) {
+		DispatchViaFavoritesHandler(state.shortPressUserEvent, state.keyCode, logCtx);
+		return;
+	}
+	constexpr std::array quickSaveLoadEvents{ &RE::UserEvents::quicksave, &RE::UserEvents::quickload, &RE::UserEvents::newSave };
+	if (userEvents && std::ranges::any_of(quickSaveLoadEvents, [&](auto member) { return state.shortPressUserEvent == userEvents->*member; })) {
+		DispatchViaQuickSaveLoadHandler(state.shortPressUserEvent, state.keyCode, logCtx);
+		return;
+	}
+
+	DispatchViaMenuOpenHandler(state.shortPressUserEvent, state.keyCode, logCtx);
 }

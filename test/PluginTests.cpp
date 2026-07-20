@@ -1,6 +1,8 @@
 #include <catch2/catch_test_macros.hpp>
 #include <limits>
+#include <vector>
 
+#include "BindingResolver.h"
 #include "Config.h"
 #include "Utils.h"
 
@@ -121,4 +123,83 @@ TEST_CASE("ActionName maps enum values and falls back to None", "[config]")
 	CHECK(std::string_view{ ActionName(Action::kQuickSave) } == "QuickSave");
 	CHECK(std::string_view{ ActionName(Action::kCharacterSheet) } == "CharacterSheet");
 	CHECK(std::string_view{ ActionName(static_cast<Action>(9999)) } == "None");
+}
+
+namespace
+{
+	/**
+	 * Gameplay-context gamepad rows from a custom controlmap that dual-binds keys.
+	 * 0x0010 = Start, 0x0020 = Back, 0x0100 = LB, 0x1000 = A, 0x0200 = RB.
+	 */
+	const std::vector<HoldFast::RawMapping> kCustomControlmap{
+		{ "Ready Weapon", 0x0004, 0x0100 },
+		{ "Tween Menu", 0x0010, 0x0100 },
+		{ "Sneak", 0x0040, 0x0100 },
+		{ "Favorites", 0x0020, 0x0000 },
+		{ "Wait", 0x0008, 0x0100 },
+		{ "Journal", 0x0010, 0x0000 },
+		{ "Quick Inventory", 0x0200, 0x1000 },
+	};
+}
+
+TEST_CASE("ResolveBinding resolves solo event for a dual-bound key", "[binding]")
+{
+	using HoldFast::ResolveBinding;
+
+	// Start is both "Journal" (solo) and the terminal of LB+Start ("Tween Menu").
+	const auto resolved = ResolveBinding(0x0010, kCustomControlmap);
+	CHECK(resolved.soloEvent == "Journal");
+	REQUIRE(resolved.comboModifiers.size() == 1);
+	CHECK(resolved.comboModifiers[0] == 0x0100);
+}
+
+TEST_CASE("ResolveBinding resolves solo-only and combo-only keys", "[binding]")
+{
+	using HoldFast::ResolveBinding;
+
+	const auto back = ResolveBinding(0x0020, kCustomControlmap);
+	CHECK(back.soloEvent == "Favorites");
+	CHECK(back.comboModifiers.empty());
+
+	const auto rb = ResolveBinding(0x0200, kCustomControlmap);
+	CHECK(rb.soloEvent.empty());
+	REQUIRE(rb.comboModifiers.size() == 1);
+	CHECK(rb.comboModifiers[0] == 0x1000);
+}
+
+TEST_CASE("ResolveBinding returns empty for an unbound key", "[binding]")
+{
+	using HoldFast::ResolveBinding;
+
+	const auto resolved = ResolveBinding(0x4000, kCustomControlmap);
+	CHECK(resolved.soloEvent.empty());
+	CHECK(resolved.comboModifiers.empty());
+}
+
+TEST_CASE("ResolveBinding keeps first solo event and deduplicates modifiers", "[binding]")
+{
+	using HoldFast::ResolveBinding;
+
+	const std::vector<HoldFast::RawMapping> mappings{
+		{ "First", 0x0010, 0x0000 },
+		{ "ComboA", 0x0010, 0x0100 },
+		{ "Second", 0x0010, 0x0000 },
+		{ "ComboA repeat", 0x0010, 0x0100 },
+		{ "ComboB", 0x0010, 0x1000 },
+	};
+	const auto resolved = ResolveBinding(0x0010, mappings);
+	CHECK(resolved.soloEvent == "First");
+	REQUIRE(resolved.comboModifiers.size() == 2);
+	CHECK(resolved.comboModifiers[0] == 0x0100);
+	CHECK(resolved.comboModifiers[1] == 0x1000);
+}
+
+TEST_CASE("IsUsedAsModifier detects keys used as combo modifiers", "[binding]")
+{
+	using HoldFast::IsUsedAsModifier;
+
+	CHECK(IsUsedAsModifier(0x0100, kCustomControlmap));
+	CHECK(IsUsedAsModifier(0x1000, kCustomControlmap));
+	CHECK_FALSE(IsUsedAsModifier(0x0010, kCustomControlmap));
+	CHECK_FALSE(IsUsedAsModifier(0x0020, kCustomControlmap));
 }
