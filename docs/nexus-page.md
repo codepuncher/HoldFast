@@ -40,7 +40,6 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 [line]
 
 <!-- generated:start -->
-
 [size=4][b][color=#B8953E]Requirements[/color][/b][/size]
 
 [list]
