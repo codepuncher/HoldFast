@@ -117,3 +117,5 @@ jobs:
           primary_mod_manager_download: true
           allow_mod_manager_download: true
           show_requirements_pop_up: true
+          mod_id: ${{ vars.NEXUSMODS_MOD_ID }}
+          changelog: ${{ steps.notes.outputs.notes }}
