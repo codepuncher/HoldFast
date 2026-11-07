@@ -51,7 +51,7 @@ jobs:
           args: README.md docs/**/*.md
 
       - name: Annotate markdown prose
-        uses: vale-cli/vale-action@v2
+        uses: vale-cli/vale-action@v3
         with:
           files: "."
           vale_flags: "--glob=README.md --glob=docs/**/*.md"
