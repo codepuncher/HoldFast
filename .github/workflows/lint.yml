@@ -54,7 +54,7 @@ jobs:
         uses: vale-cli/vale-action@v3
         with:
           files: "."
-          vale_flags: "--glob=README.md --glob=docs/**/*.md"
+          glob: "{README.md,docs/**/*.md}"
           reporter: github-pr-check
           filter_mode: nofilter
           fail_on_error: true
