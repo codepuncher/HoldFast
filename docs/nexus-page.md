@@ -65,7 +65,7 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 
 [list=1]
 [*]Install the requirements above.
-[*]Copy [font=Courier New]HoldFast.dll[/font] and [font=Courier New]HoldFast.ini[/font] to [font=Courier New]Data\SKSE\Plugins\[/font].
+[*]Copy the archive's [font=Courier New]SKSE[/font] folder into [font=Courier New]Data\[/font].
 [*]Launch Skyrim via SKSE.
 [/list]
 

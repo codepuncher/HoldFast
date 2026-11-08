@@ -88,6 +88,87 @@ trap 'rm -rf "$tmp"' EXIT
 mkdir -p "$tmp/SKSE/Plugins"
 cp "$dll" "$tmp/SKSE/Plugins/"
 cp "HoldFast.ini" "$tmp/SKSE/Plugins/"
+
+# Multi-config generators put the DLL in <binaryDir>/<Config>, one level below the cache.
+CMAKE_DIR="${build_dir}"
+if [[ ! -f "${CMAKE_DIR}/CMakeCache.txt" ]]; then
+    CMAKE_DIR=$(dirname "${build_dir}")
+fi
+if [[ ! -f "${CMAKE_DIR}/CMakeCache.txt" ]]; then
+    echo "Error: no CMakeCache.txt in ${build_dir} or its parent"
+    exit 1
+fi
+
+VCPKG_INSTALLED=$(grep -oP '^VCPKG_INSTALLED_DIR:PATH=\K.*' "${CMAKE_DIR}/CMakeCache.txt" || true)
+VCPKG_TRIPLET=$(grep -oP '^VCPKG_TARGET_TRIPLET:STRING=\K.*' "${CMAKE_DIR}/CMakeCache.txt" || true)
+if [[ -z "${VCPKG_INSTALLED}" || -z "${VCPKG_TRIPLET}" ]]; then
+    echo "Error: could not read vcpkg install dir or triplet from ${CMAKE_DIR}/CMakeCache.txt"
+    exit 1
+fi
+if command -v cygpath &>/dev/null; then
+    VCPKG_INSTALLED=$(cygpath -u "${VCPKG_INSTALLED}")
+fi
+VCPKG_SHARE="${VCPKG_INSTALLED}/${VCPKG_TRIPLET}/share"
+
+# vcpkg-* ports are host build helpers and are not linked into the DLL.
+mapfile -t COPYRIGHTS < <(find "${VCPKG_SHARE}" -mindepth 2 -maxdepth 2 -name copyright ! -path '*/share/vcpkg-*/*' | sort)
+if [[ ${#COPYRIGHTS[@]} -eq 0 ]]; then
+    echo "Error: no vcpkg copyright files found in ${VCPKG_SHARE}"
+    exit 1
+fi
+
+if ! SOURCE_URL=$(git remote get-url origin 2>/dev/null); then
+    echo "Error: no git remote 'origin'; it is needed for the source URL in the notices"
+    exit 1
+fi
+SOURCE_URL=$(sed -E 's#^(ssh://)?git@github\.com[:/]#https://github.com/#; s#\.git$##' <<< "${SOURCE_URL}")
+
+COMMONLIB_DIR=$(git config -f .gitmodules submodule.lib/commonlibsse-ng.path || true)
+COMMONLIB_URL=$(git config -f .gitmodules submodule.lib/commonlibsse-ng.url | sed -E 's#\.git$##' || true)
+SKSE_MCP_DIR=$(git config -f .gitmodules submodule.lib/skse-mcp.path || true)
+SKSE_MCP_URL=$(git config -f .gitmodules submodule.lib/skse-mcp.url | sed -E 's#\.git$##' || true)
+if [[ -z "${COMMONLIB_DIR}" || -z "${COMMONLIB_URL}" || -z "${SKSE_MCP_DIR}" || -z "${SKSE_MCP_URL}" ]]; then
+    echo "Error: could not read CommonLibSSE-NG or skse-mcp submodule entries from .gitmodules"
+    exit 1
+fi
+COMMONLIB_LICENSE=$(grep -oP '"license":\s*"\K[^"]+' "${COMMONLIB_DIR}/vcpkg.json" || true)
+if [[ -z "${COMMONLIB_LICENSE}" || ! -f "${COMMONLIB_DIR}/EXCEPTIONS.md" || ! -f "${COMMONLIB_DIR}/licenses/README.md" ]]; then
+    echo "Error: could not read CommonLibSSE-NG license, EXCEPTIONS.md or licenses/README.md from ${COMMONLIB_DIR}"
+    exit 1
+fi
+mapfile -t COMMONLIB_EXTRA_LICENSES < <(find "${COMMONLIB_DIR}/licenses" -maxdepth 1 -name 'LICENSE-*.txt' | sort)
+if [[ ${#COMMONLIB_EXTRA_LICENSES[@]} -eq 0 ]]; then
+    echo "Error: no LICENSE-*.txt files found in ${COMMONLIB_DIR}/licenses"
+    exit 1
+fi
+
+DOCS_DIR="${tmp}/SKSE/Plugins/${name}"
+mkdir -p "${DOCS_DIR}"
+cp LICENSE "${DOCS_DIR}/LICENSE.txt"
+
+{
+    printf '%s is licensed under the GNU General Public License v3.0 or later (see LICENSE.txt).\n' "${name}"
+    printf 'Source code: %s\n' "${SOURCE_URL}"
+    printf '\nIt includes the following third-party software.\n'
+    printf '\n==== CommonLibSSE-NG ====\n\n'
+    printf '%s\n' "${COMMONLIB_URL}"
+    printf 'Licensed under %s with the additional permissions in EXCEPTIONS.md.\n' "${COMMONLIB_LICENSE}"
+    printf 'The files after it are its bundled code and legacy license notices.\n'
+    printf '\n---- EXCEPTIONS.md ----\n\n'
+    cat "${COMMONLIB_DIR}/EXCEPTIONS.md"
+    printf '\n---- licenses/README.md ----\n\n'
+    cat "${COMMONLIB_DIR}/licenses/README.md"
+    for EXTRA in "${COMMONLIB_EXTRA_LICENSES[@]}"; do
+        printf '\n---- %s ----\n\n' "$(basename "${EXTRA}")"
+        cat "${EXTRA}"
+    done
+    for COPYRIGHT in "${COPYRIGHTS[@]}"; do
+        printf '\n==== %s ====\n\n' "$(basename "$(dirname "${COPYRIGHT}")")"
+        cat "${COPYRIGHT}"
+    done
+    printf '\n==== skse-mcp ====\n\n%s\n\n' "${SKSE_MCP_URL}"
+    cat "${SKSE_MCP_DIR}/LICENSE"
+} > "${DOCS_DIR}/THIRD-PARTY-NOTICES.txt"
 (cd "$tmp" && 7z a -tzip out.zip SKSE > /dev/null)
 mv "$tmp/out.zip" "$zip_name"
 
