@@ -294,4 +294,5 @@ Upload behavior is configured as:
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+HoldFast is licensed under the GNU General Public License v3.0 or later.
+See [LICENSE](LICENSE).
