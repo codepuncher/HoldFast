@@ -14,7 +14,7 @@ Inspired by Red Dead Redemption 2's hold-Start-to-open-map mechanic.
 
 ## Requirements
 
-- [Skyrim Special Edition](https://store.steampowered.com/app/489830) or Anniversary Edition
+- [Skyrim Special Edition](https://store.steampowered.com/app/489830) or Anniversary Edition, runtime 1.5.97, 1.6.x or 1.7.x
 - [SKSE64](https://skse.silverlock.org/)
 - [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
 - Optional: [SKSE Menu Framework](https://www.nexusmods.com/skyrimspecialedition/mods/120352) for in-game settings UI
@@ -288,7 +288,7 @@ Upload behavior is configured as:
 - Inspired by the hold-Start-to-open-map mechanic in **Red Dead Redemption 2**
 - [SKSE](https://skse.silverlock.org/) by the SKSE Team
 - [Address Library for SKSE plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444) by [meh321](https://www.nexusmods.com/profile/meh321)
-- [CommonLibSSE-NG](https://github.com/alandtse/CommonLibVR) by [alandtse](https://github.com/alandtse) and contributors
+- [CommonLibSSE-NG](https://github.com/alandtse/CommonLibSSE-NG) by [alandtse](https://github.com/alandtse) and contributors
 
 ---
 
