@@ -30,7 +30,7 @@ Inspired by Red Dead Redemption 2's hold-Start-to-open-map mechanic.
 **Manual:**
 
 1. Install the requirements above.
-2. Copy `HoldFast.dll` and `HoldFast.ini` to `Data\SKSE\Plugins\`.
+2. Copy the archive's `SKSE` folder into `Data\`.
 3. Launch Skyrim via SKSE.
 
 ## Configuration
