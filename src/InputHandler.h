@@ -35,8 +35,10 @@ public:
 
 	void SetHoldDuration(float a_duration) noexcept { holdDuration = a_duration; }
 
-	// Replace the tracked button list. Entries with action == kNone are excluded by the caller.
-	// Call before registering the input sink.
+	/**
+	 * Replace the tracked button list. Entries with action == kNone are
+	 * excluded by the caller. Call before registering the input sink.
+	 */
 	void SetButtons(std::vector<ButtonConfig> a_configs);
 
 	/**
@@ -50,15 +52,19 @@ public:
 private:
 	InputHandler() = default;
 
-	// Game-internal variable controlling which tab the Journal Menu opens on.
-	// RELOCATION_ID(520167 = SE 1.5.97, 406697 = AE 1.6.x).
+	/**
+	 * Game-internal variable controlling which tab the Journal Menu opens on.
+	 * RELOCATION_ID(520167 = SE 1.5.97, 406697 = AE 1.6.x and 1.7.x).
+	 */
 	enum class JournalTab : std::uint32_t
 	{
 		kQuest = 0,
 		kStats = 1,
 		kSystem = 2,
-		// Sentinel: opens Journal on the System tab then navigates to the MCM overlay.
-		// Not a real sJournalTabIdx value — kSystem (2) is written to the relocation.
+		/**
+		 * Sentinel: opens Journal on the System tab then navigates to the MCM overlay.
+		 * Not a real sJournalTabIdx value; kSystem (2) is written to the relocation.
+		 */
 		kMCM = 3,
 	};
 	static inline REL::Relocation<std::uint32_t*> sJournalTabIdx{ RELOCATION_ID(520167, 406697) };
@@ -94,25 +100,31 @@ private:
 	float                    holdDuration{ kDefaultHoldDuration };
 	std::vector<ButtonState> _buttons;
 
-	// Saved tab index to restore sJournalTabIdx after any Journal long-press, so the
-	// player's next normal Journal open lands on the tab they had before the long-press.
-	// Restored on Journal close, or immediately as a fail-safe if the Journal never opens.
-	// _pendingTab: target tab to set via Scaleform on Journal open (QJO compat).
-	// _lastKnownTab: (QJO only) tab the player was last on when the Journal was open; used to
-	//               counter QJO's forced kSystem override on every Journal open. Updated by the
-	//               GameIsPaused input snapshot whenever the Journal is open (skips kQuest=0,
-	//               the navigation-away transient set by the SWF before CloseMenu). Empty until
-	//               first snapshot fires.
-	// _qjoInstalled: cached result of QJO presence detection (detected on first Journal open).
-	//               When false/empty, QJO tab-restore logic is skipped entirely.
-	JournalTab                _savedTabIdx{ JournalTab::kQuest };
-	bool                      _tabRestorePending{ false };
-	bool                      _journalOpenDispatched{ false };
+	/**
+	 * Restores sJournalTabIdx after any Journal long-press, so the player's next
+	 * normal Journal open lands on the tab they had before the long-press.
+	 * Restored on Journal close, or as a fail-safe if the Journal never opens.
+	 */
+	JournalTab _savedTabIdx{ JournalTab::kQuest };
+	bool       _tabRestorePending{ false };
+	bool       _journalOpenDispatched{ false };
+	/**
+	 * Target tab to set via Scaleform on Journal open (QJO compat).
+	 */
 	std::optional<JournalTab> _pendingTab{};
+	/**
+	 * QJO only: counters QJO's forced kSystem override on every Journal open.
+	 * The GameIsPaused input snapshot updates it while the Journal is open,
+	 * skipping kQuest, the transient the SWF sets before CloseMenu.
+	 */
 	std::optional<JournalTab> _lastKnownTab{};
-	std::optional<bool>       _qjoInstalled{};
-	std::string               _pendingMCMModName;
-	bool                      _mcmQuickexit{ false };
-	bool                      _mcmWasOpen{ false };
-	bool                      _mcmModPageSeen{ false };
+	/**
+	 * Detected on first Journal open; when false or empty, QJO tab-restore
+	 * logic is skipped entirely.
+	 */
+	std::optional<bool> _qjoInstalled{};
+	std::string         _pendingMCMModName;
+	bool                _mcmQuickexit{ false };
+	bool                _mcmWasOpen{ false };
+	bool                _mcmModPageSeen{ false };
 };

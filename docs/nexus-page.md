@@ -43,7 +43,7 @@ Hold a gamepad button for a configurable duration to jump directly to a menu. Ea
 [size=4][b][color=#B8953E]Requirements[/color][/b][/size]
 
 [list]
-[*][url=https://store.steampowered.com/app/489830]Skyrim Special Edition[/url] or Anniversary Edition
+[*][url=https://store.steampowered.com/app/489830]Skyrim Special Edition[/url] or Anniversary Edition, runtime 1.5.97, 1.6.x or 1.7.x
 [*][url=https://skse.silverlock.org/]SKSE64[/url]
 [*][url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE Plugins[/url]
 [*]Optional: [url=https://www.nexusmods.com/skyrimspecialedition/mods/120352]SKSE Menu Framework[/url] for in-game settings UI
@@ -133,7 +133,7 @@ Logs are written to:
 [size=4][b]Compatibility[/b][/size]
 
 [list]
-[*]Compatible with Skyrim SE and AE.
+[*]Compatible with Skyrim SE and AE on runtime 1.5.97, 1.6.x and 1.7.x.
 [*]No ESP/ESL required.
 [*]Compatible with any mod that does not also intercept the configured gamepad button.
 [/list]
@@ -146,7 +146,7 @@ Logs are written to:
 [*]Inspired by [b]Red Dead Redemption 2[/b]
 [*][url=https://skse.silverlock.org/]SKSE[/url] by the SKSE Team
 [*][url=https://www.nexusmods.com/skyrimspecialedition/mods/32444]Address Library for SKSE plugins[/url] by [url=https://www.nexusmods.com/profile/meh321]meh321[/url]
-[*][url=https://github.com/alandtse/CommonLibVR]CommonLibSSE-NG[/url] by [url=https://github.com/alandtse]alandtse[/url] and contributors
+[*][url=https://github.com/alandtse/CommonLibSSE-NG]CommonLibSSE-NG[/url] by [url=https://github.com/alandtse]alandtse[/url] and contributors
 [*][url=https://github.com/codepuncher/HoldFast]Source code: GitHub[/url]
 [/list]
 ```
