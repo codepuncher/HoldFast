@@ -113,7 +113,7 @@ else()
     target_include_directories(
         ${PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src" "${CMAKE_CURRENT_BINARY_DIR}/src"
                                 "${CMAKE_CURRENT_SOURCE_DIR}/lib/skse-mcp/include")
-    target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE UNICODE _UNICODE NOMINMAX)
 
     set_target_properties(
         ${PROJECT_NAME}

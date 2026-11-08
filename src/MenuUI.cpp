@@ -18,21 +18,16 @@ namespace
 		return installed;
 	}
 
-	// menuFramework (HMODULE) is declared as a file-scope static in
-	// SKSEMenuFramework.hpp (pulled in via SKSEMCP/utils.hpp). Do not
-	// redeclare it here — that would shadow the variable used by every
-	// GetProcAddress call inside that header.
 	bool EnsureFrameworkLoaded()
 	{
-		if (menuFramework) {
+		if (GetMenuFrameworkModule()) {
 			return true;
 		}
-		menuFramework = GetModuleHandleW(L"SKSEMenuFramework.dll");
-		if (menuFramework) {
-			return true;
+		if (!LoadLibraryW(LR"(Data\SKSE\Plugins\SKSEMenuFramework.dll)")) {
+			return false;
 		}
-		menuFramework = LoadLibraryW(LR"(Data\SKSE\Plugins\SKSEMenuFramework.dll)");
-		return menuFramework != nullptr;
+
+		return static_cast<bool>(GetMenuFrameworkModule());
 	}
 
 	bool HasBlockingWindowExport()
@@ -49,7 +44,7 @@ namespace
 			return false;
 		}
 
-		hasExport = GetProcAddress(menuFramework, "IsAnyBlockingWindowOpened") != nullptr;
+		hasExport = static_cast<bool>(GetProcAddress(GetMenuFrameworkModule(), "IsAnyBlockingWindowOpened"));
 		exportResolved = true;
 		return hasExport;
 	}
@@ -253,8 +248,8 @@ void HoldFastMenuUI::Register()
 		logger::warn("SKSE Menu Framework detected on disk but DLL is not loaded — integration disabled");
 		return;
 	}
-	if (!GetProcAddress(menuFramework, "AddSectionItem") ||
-		!GetProcAddress(menuFramework, "IsAnyBlockingWindowOpened")) {
+	if (!GetProcAddress(GetMenuFrameworkModule(), "AddSectionItem") ||
+		!GetProcAddress(GetMenuFrameworkModule(), "IsAnyBlockingWindowOpened")) {
 		logger::warn("SKSE Menu Framework required exports are unavailable — integration disabled");
 		return;
 	}
