@@ -88,6 +88,9 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 
 	if (!messaging->RegisterListener([](SKSE::MessagingInterface::Message* a_msg) {
 			switch (a_msg->type) {
+			case SKSE::MessagingInterface::kPostLoad:
+				HoldFastMenuUI::Register();
+				break;
 			case SKSE::MessagingInterface::kInputLoaded:
 				OnInputLoaded();
 				break;
@@ -103,8 +106,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		logger::error("Failed to register messaging listener");
 		return false;
 	}
-
-	HoldFastMenuUI::Register();
 
 	return true;
 }

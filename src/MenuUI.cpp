@@ -9,44 +9,15 @@
 
 namespace
 {
-	bool IsFrameworkInstalled()
+	/**
+	 * Gates every framework call: skse-mcp wrappers cache their function
+	 * pointer on first use, so a call before the DLL loads sticks at null.
+	 */
+	bool& FrameworkRegistered()
 	{
-		static std::atomic<bool> installed{ false };
-		if (!installed && SKSEMenuFramework::IsInstalled()) {
-			installed = true;
-		}
-		return installed;
-	}
+		static bool registered{ false };
 
-	bool EnsureFrameworkLoaded()
-	{
-		if (GetMenuFrameworkModule()) {
-			return true;
-		}
-		if (!LoadLibraryW(LR"(Data\SKSE\Plugins\SKSEMenuFramework.dll)")) {
-			return false;
-		}
-
-		return static_cast<bool>(GetMenuFrameworkModule());
-	}
-
-	bool HasBlockingWindowExport()
-	{
-		static bool exportResolved = false;
-		static bool hasExport = false;
-
-		if (exportResolved) {
-			return hasExport;
-		}
-
-		// If the framework DLL isn't loaded yet, keep retrying on future calls.
-		if (!EnsureFrameworkLoaded()) {
-			return false;
-		}
-
-		hasExport = static_cast<bool>(GetProcAddress(GetMenuFrameworkModule(), "IsAnyBlockingWindowOpened"));
-		exportResolved = true;
-		return hasExport;
+		return registered;
 	}
 
 	struct MenuState
@@ -232,7 +203,7 @@ namespace
 				ResetToDefaults();
 			}
 		} catch (...) {
-			logger::error("RenderSettings: unhandled exception — skipping UI frame");
+			logger::error("RenderSettings: unhandled exception; skipping UI frame");
 		}
 	}
 
@@ -240,33 +211,28 @@ namespace
 
 void HoldFastMenuUI::Register()
 {
-	if (!IsFrameworkInstalled()) {
-		logger::info("SKSE Menu Framework not installed — in-game settings menu disabled (INI config still available)");
+	auto* const framework = GetMenuFrameworkModule();
+	if (!framework) {
+		logger::info("SKSE Menu Framework not loaded; in-game settings menu disabled (INI config still available)");
 		return;
 	}
-	if (!EnsureFrameworkLoaded()) {
-		logger::warn("SKSE Menu Framework detected on disk but DLL is not loaded — integration disabled");
-		return;
-	}
-	if (!GetProcAddress(GetMenuFrameworkModule(), "AddSectionItem") ||
-		!GetProcAddress(GetMenuFrameworkModule(), "IsAnyBlockingWindowOpened")) {
-		logger::warn("SKSE Menu Framework required exports are unavailable — integration disabled");
+	if (!GetProcAddress(framework, "AddSectionItem") || !GetProcAddress(framework, "IsAnyBlockingWindowOpened")) {
+		logger::warn("SKSE Menu Framework required exports are unavailable; integration disabled");
 		return;
 	}
 
 	ReloadFromConfig(false);
 	SKSEMenuFramework::SetSection("HoldFast");
 	SKSEMenuFramework::AddSectionItem("Settings", RenderSettings);
+	FrameworkRegistered() = true;
 	logger::info("SKSE Menu Framework integration registered");
 }
 
 bool HoldFastMenuUI::IsBlockingInput()
 {
-	if (!IsFrameworkInstalled()) {
+	if (!FrameworkRegistered()) {
 		return false;
 	}
-	if (!HasBlockingWindowExport()) {
-		return false;
-	}
+
 	return SKSEMenuFramework::IsAnyBlockingWindowOpened();
 }
