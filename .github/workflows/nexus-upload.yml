@@ -1,6 +1,9 @@
 name: Nexus Mods Upload
 
 on:
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
   workflow_dispatch:
     inputs:
       version:
@@ -13,28 +16,64 @@ permissions: {}
 jobs:
   upload:
     runs-on: ubuntu-latest
+    environment: nexus
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main' && !endsWith(github.event.workflow_run.display_title, '(test)'))
+    concurrency:
+      group: nexus-upload
+      cancel-in-progress: false
 
     permissions:
       contents: read
 
     steps:
-      - name: Resolve version
-        id: version
+      - name: Check Nexus configuration
         shell: bash
         env:
-          VERSION: ${{ inputs.version }}
+          NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+          NEXUSMODS_FILE_ID: ${{ secrets.NEXUSMODS_FILE_ID }}
+          NEXUSMODS_MOD_ID: ${{ secrets.NEXUSMODS_MOD_ID }}
+          NEXUSMODS_DISPLAY_NAME: ${{ vars.NEXUSMODS_DISPLAY_NAME }}
         run: |
-          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          MISSING=0
+          for NAME in NEXUSMODS_API_KEY NEXUSMODS_FILE_ID NEXUSMODS_MOD_ID NEXUSMODS_DISPLAY_NAME; do
+            if [[ -z "${!NAME}" ]]; then
+              echo "Error: ${NAME} is not set in the nexus environment" >&2
+              MISSING=1
+            fi
+          done
+          exit "${MISSING}"
+
+      - name: Validate input version
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "${INPUT_VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Error: version must be X.Y.Z without 'v' prefix; test builds don't go to Nexus" >&2
             exit 1
           fi
-          echo "value=${VERSION}" >> "${GITHUB_OUTPUT}"
 
       - name: Checkout
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          ref: v${{ steps.version.outputs.value }}
+          ref: ${{ github.event.workflow_run.head_sha || format('v{0}', inputs.version) }}
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          TAG="$(git tag --points-at HEAD | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n1 || true)"
+          VERSION="${TAG#v}"
+          VERSION="${VERSION:-${INPUT_VERSION}}"
+          if [[ ! "${VERSION}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: version must be X.Y.Z without 'v' prefix; test builds don't go to Nexus" >&2
+            exit 1
+          fi
+          echo "value=${VERSION}" >> "${GITHUB_OUTPUT}"
 
       - name: Compute cliff range
         id: range
@@ -95,22 +134,25 @@ jobs:
           NOTES: ${{ steps.cliff.outputs.content }}
         run: |
           DELIM="$(dd if=/dev/urandom bs=15 count=1 status=none | base64)"
-          echo "notes<<$DELIM" >> "$GITHUB_OUTPUT"
-          echo "${NOTES//"## "/}" >> "$GITHUB_OUTPUT"
-          echo "$DELIM" >> "$GITHUB_OUTPUT"
+          {
+            printf 'notes<<%s\n' "${DELIM}"
+            printf '%s\n' "${NOTES//"## "/}"
+            printf '%s\n' "${DELIM}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Upload to Nexus Mods
         uses: Nexus-Mods/upload-action@v1.0.0-beta.11
         with:
           api_key: ${{ secrets.NEXUSMODS_API_KEY }}
-          file_id: ${{ vars.NEXUSMODS_FILE_GROUP_ID }}
+          file_id: ${{ secrets.NEXUSMODS_FILE_ID }}
           filename: ${{ steps.artifact.outputs.zip }}
-          display_name: ${{ github.event.repository.name }}
+          display_name: ${{ vars.NEXUSMODS_DISPLAY_NAME }}
           description: ${{ steps.notes.outputs.notes }}
           version: ${{ steps.version.outputs.value }}
           archive_existing_version: true
+          update_mod_version: true
           primary_mod_manager_download: true
           allow_mod_manager_download: true
           show_requirements_pop_up: true
-          mod_id: ${{ vars.NEXUSMODS_MOD_ID }}
+          mod_id: ${{ secrets.NEXUSMODS_MOD_ID }}
           changelog: ${{ steps.notes.outputs.notes }}
