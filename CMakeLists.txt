@@ -1,10 +1,31 @@
 cmake_minimum_required(VERSION 3.21)
 
+# Keeps a -D value from sticking to the build directory.
+set(HOLDFAST_VERSION "${HOLDFAST_VERSION}")
+unset(HOLDFAST_VERSION CACHE)
+if(NOT HOLDFAST_VERSION)
+    set(HOLDFAST_VERSION "0.0.0")
+endif()
+if(NOT HOLDFAST_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?$")
+    message(FATAL_ERROR "HOLDFAST_VERSION must be X.Y.Z or X.Y.Z.W, got '${HOLDFAST_VERSION}'")
+endif()
+
 project(
     HoldFast
-    VERSION 1.4.1
+    VERSION ${HOLDFAST_VERSION}
     DESCRIPTION "Configurable hold actions for gamepad buttons; short press still works normally"
     LANGUAGES CXX)
+
+if(NOT PROJECT_VERSION_TWEAK)
+    set(PROJECT_VERSION_TWEAK 0)
+endif()
+# REL::Version::pack() keeps 8 bits of major and minor, 12 of patch and 4 of tweak.
+if(PROJECT_VERSION_MAJOR GREATER 255
+   OR PROJECT_VERSION_MINOR GREATER 255
+   OR PROJECT_VERSION_PATCH GREATER 4095
+   OR PROJECT_VERSION_TWEAK GREATER 15)
+    message(FATAL_ERROR "HOLDFAST_VERSION is out of range (max 255.255.4095.15), got '${HOLDFAST_VERSION}'")
+endif()
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
